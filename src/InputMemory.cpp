@@ -2,7 +2,7 @@
 
 #include "InputMemory.hpp"
 
-namespace nav::input::memory
+namespace navia::input::memory
 {
 
 static void close(void **userdata)
@@ -35,7 +35,7 @@ static size_t read(void *userdata, void *dest, size_t size)
 	return readed;
 }
 
-static nav_bool seek(void *userdata, uint64_t pos)
+static navia_bool seek(void *userdata, uint64_t pos)
 {
 	Memory *mem = (Memory*) userdata;
 
@@ -59,7 +59,7 @@ static uint64_t fsize(void *userdata)
 	return (uint64_t) mem->size;
 }
 
-void populate(nav_input *input, void *buf, size_t size)
+void populate(navia_input *input, void *buf, size_t size)
 {
 	Memory *mem = new Memory();
 	mem->data = (uint8_t*) buf;

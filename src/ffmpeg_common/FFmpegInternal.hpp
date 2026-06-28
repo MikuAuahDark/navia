@@ -1,21 +1,20 @@
-#ifdef _NAV_FFMPEG_VERSION
+#ifdef _NAVIA_FFMPEG_VERSION
 
-#ifndef _NAV_BACKEND_FFMPEG_INTERNAL_
-#define _NAV_BACKEND_FFMPEG_INTERNAL_
+#ifndef _NAVIA_BACKEND_FFMPEG_INTERNAL_
+#define _NAVIA_BACKEND_FFMPEG_INTERNAL_
 
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "Internal.hpp"
-#include "Backend.hpp"
 #include "FFmpegBackend.hpp"
 #include "FFmpegCommon.hpp"
 #include "DynLib.hpp"
 
-namespace nav::_NAV_FFMPEG_NAMESPACE
+namespace navia::_NAVIA_FFMPEG_NAMESPACE
 {
-	
+
 using UniqueAVFormatContext = std::unique_ptr<AVFormatContext, decltype(&avformat_free_context)>;
 using UniqueAVIOContext = std::unique_ptr<AVIOContext, ffmpeg_common::DoublePointerDeleter<AVIOContext>>;
 using UniqueAVCodecContext = std::unique_ptr<AVCodecContext, ffmpeg_common::DoublePointerDeleter<AVCodecContext>>;
@@ -29,7 +28,7 @@ class FFmpegFrame: public Frame
 public:
 	FFmpegFrame(
 		FFmpegBackend *backend,
-		nav_streaminfo_t *sinfo,
+		navia_streaminfo_t *sinfo,
 		AVFrame *frame,
 		const AVCodecContext *cctx,
 		double pts,
@@ -37,11 +36,11 @@ public:
 	);
 	~FFmpegFrame() override;
 	size_t getStreamIndex() const noexcept override;
-	const nav_streaminfo_t *getStreamInfo() const noexcept override;
+	const navia_streaminfo_t *getStreamInfo() const noexcept override;
 	double tell() const noexcept override;
 	const uint8_t *const *acquire(ptrdiff_t **strides, size_t *nplanes) override;
 	void release() noexcept override;
-	nav_hwacceltype getHWAccelType() const noexcept override;
+	navia_hwacceltype getHWAccelType() const noexcept override;
 	void *getHWAccelHandle() override;
 
 private:
@@ -49,7 +48,7 @@ private:
 	AVFrame *frame;
 	const AVCodecContext *codecContext;
 	FFmpegBackend *f;
-	nav_streaminfo_t *streamInfo;
+	navia_streaminfo_t *streamInfo;
 	double pts;
 	size_t index;
 };
@@ -57,11 +56,11 @@ private:
 class FFmpegState: public State
 {
 public:
-	FFmpegState(FFmpegBackend *backend, UniqueAVFormatContext &formatContext, UniqueAVIOContext &ioContext, const nav_settings &settings);
+	FFmpegState(FFmpegBackend *backend, UniqueAVFormatContext &formatContext, UniqueAVIOContext &ioContext, const navia_settings &settings);
 	~FFmpegState() override;
 	Backend *getBackend() const noexcept override;
 	size_t getStreamCount() const noexcept override;
-	const nav_streaminfo_t *getStreamInfo(size_t index) const noexcept override;
+	const navia_streaminfo_t *getStreamInfo(size_t index) const noexcept override;
 	bool isStreamEnabled(size_t index) const noexcept override;
 	bool setStreamEnabled(size_t index, bool enabled) override;
 	double getDuration() noexcept override;
@@ -69,10 +68,10 @@ public:
 	double setPosition(double off) override;
 	bool prepare() override;
 	bool isPrepared() const noexcept override;
-	nav_frame_t *read() override;
+	navia_frame_t *read() override;
 
 private:
-	nav_frame_t *decode(AVFrame *frame, size_t index);
+	navia_frame_t *decode(AVFrame *frame, size_t index);
 	bool canDecode(size_t index);
 	std::vector<AVHWDeviceType> getHWAccels();
 	static AVPixelFormat pickPixelFormat(AVCodecContext *s, const AVPixelFormat *fmt) noexcept;
@@ -86,7 +85,7 @@ private:
 	bool eof;
 	bool prepared;
 
-	std::vector<nav_streaminfo_t> streamInfo;
+	std::vector<navia_streaminfo_t> streamInfo;
 	std::vector<AVCodecContext*> decoders;
 	std::vector<SwrContext*> resamplers;
 	std::vector<SwsContext*> rescalers;
@@ -99,9 +98,9 @@ public:
 	FFmpegBackend();
 	~FFmpegBackend() override;
 	const char *getName() const noexcept override;
-	nav_backendtype getType() const noexcept override;
+	navia_backendtype getType() const noexcept override;
 	const char *getInfo() override;
-	State *open(nav_input *input, const char *filename, const nav_settings *settings) override;
+	State *open(navia_input *input, const char *filename, const navia_settings *settings) override;
 
 private:
 	friend class FFmpegState;
@@ -115,9 +114,9 @@ private:
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
-#define _NAV_PROXY_FUNCTION_POINTER(lib, n) decltype(n) *func_##n;
+#define _NAVIA_PROXY_FUNCTION_POINTER(lib, n) decltype(n) *func_##n;
 #include "FFmpegPointers.h"
-#undef _NAV_PROXY_FUNCTION_POINTER
+#undef _NAVIA_PROXY_FUNCTION_POINTER
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
@@ -126,5 +125,5 @@ private:
 
 }
 
-#endif /* _NAV_BACKEND_FFMPEG_INTERNAL_ */
-#endif /* _NAV_FFMPEG_VERSION */
+#endif /* _NAVIA_BACKEND_FFMPEG_INTERNAL_ */
+#endif /* _NAVIA_FFMPEG_VERSION */

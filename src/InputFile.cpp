@@ -1,4 +1,4 @@
-// See nav_input_file_android.cpp for Android handling instead.
+// See navia_input_file_android.cpp for Android handling instead.
 #ifndef __ANDROID__
 #define _FILE_OFFSET_BITS 64
 
@@ -22,7 +22,7 @@
 #define ftello _ftelli64
 #endif
 
-namespace nav::input::file
+namespace navia::input::file
 {
 
 static void closefile(void **userdata)
@@ -47,7 +47,7 @@ static size_t readfile(void *userdata, void *dest, size_t size)
 	return fread(dest, 1, size, (FILE*) userdata);
 }
 
-static nav_bool seekfile(void *userdata, uint64_t pos)
+static navia_bool seekfile(void *userdata, uint64_t pos)
 {
 	return seekimpl((FILE*) userdata, (int64_t) pos, SEEK_SET) == 0;
 }
@@ -69,7 +69,7 @@ static uint64_t sizefile(void *userdata)
 	return size;
 }
 
-bool populate(nav_input *input, const std::string &filename)
+bool populate(navia_input *input, const std::string &filename)
 {
 	FILE *f = nullptr;
 
@@ -85,12 +85,12 @@ bool populate(nav_input *input, const std::string &filename)
 	{
 		try
 		{
-			std::wstring wide = nav::fromUTF8(filename);
+			std::wstring wide = navia::fromUTF8(filename);
 			f = _wfopen(wide.c_str(), L"rb");
 		}
 		catch (const std::exception &e)
 		{
-			nav::error::set(e);
+			navia::error::set(e);
 			return false;
 		}
 	}
@@ -100,11 +100,11 @@ bool populate(nav_input *input, const std::string &filename)
 
 	if (!f)
 	{
-		nav::error::set("Cannot open file");
+		navia::error::set("Cannot open file");
 		return false;
 	}
 
-	nav::error::set("");
+	navia::error::set("");
 	input->userdata = f;
 	input->close = closefile;
 	input->read = readfile;

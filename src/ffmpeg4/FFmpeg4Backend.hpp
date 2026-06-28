@@ -1,17 +1,17 @@
-#ifndef _NAV_BACKEND_FFMPEG_4_
-#define _NAV_BACKEND_FFMPEG_4_
+#ifndef _NAVIA_BACKEND_FFMPEG_4_
+#define _NAVIA_BACKEND_FFMPEG_4_
 
-#include "NAVConfig.hpp"
+#include "../Config.hpp"
 
-#ifdef NAV_BACKEND_FFMPEG_4
+#ifdef NAVIA_BACKEND_FFMPEG_4
 
-#ifdef _NAV_FFMPEG_VERSION
-#undef _NAV_FFMPEG_VERSION
+#ifdef _NAVIA_FFMPEG_VERSION
+#undef _NAVIA_FFMPEG_VERSION
 #endif
-#define _NAV_FFMPEG_VERSION 4
+#define _NAVIA_FFMPEG_VERSION 4
 
-#include "ffmpeg_common/FFmpegBackend.hpp"
-#undef _NAV_BACKEND_FFMPEG_
+#include "../ffmpeg_common/FFmpegBackend.hpp"
+#undef _NAVIA_BACKEND_FFMPEG_
 
-#endif /* NAV_BACKEND_FFMPEG_4 */
-#endif /* _NAV_BACKEND_FFMPEG_4_ */
+#endif /* NAVIA_BACKEND_FFMPEG_4 */
+#endif /* _NAVIA_BACKEND_FFMPEG_4_ */

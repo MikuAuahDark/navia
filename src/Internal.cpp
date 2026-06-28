@@ -1,8 +1,16 @@
 #include "Internal.hpp"
 
-nav_t::~nav_t()
+navia_t::~navia_t()
 {}
 
-nav_frame_t::~nav_frame_t()
+navia_frame_t::~navia_frame_t()
 {
+}
+
+namespace navia
+{
+
+Backend::~Backend()
+{}
+
 }

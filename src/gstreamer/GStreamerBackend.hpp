@@ -1,19 +1,18 @@
-#ifndef _NAV_BACKEND_GSTREAMER_H_
-#define _NAV_BACKEND_GSTREAMER_H_
+#ifndef _NAVIA_BACKEND_GSTREAMER_H_
+#define _NAVIA_BACKEND_GSTREAMER_H_
 
-#include "NAVConfig.hpp"
+#include "Config.hpp"
 
-#ifdef NAV_BACKEND_GSTREAMER
+#ifdef NAVIA_BACKEND_GSTREAMER
 
 #include "Internal.hpp"
-#include "Backend.hpp"
 
-namespace nav::gstreamer
+namespace navia::gstreamer
 {
 
 Backend *create();
 
 }
 
-#endif /* NAV_BACKEND_GSTREAMER */
-#endif /* _NAV_BACKEND_GSTREAMER_H_ */
+#endif /* NAVIA_BACKEND_GSTREAMER */
+#endif /* _NAVIA_BACKEND_GSTREAMER_H_ */

@@ -1,9 +1,9 @@
-#ifndef _NAV_BACKEND_GSTREAMER_INTERNAL_H_
-#define _NAV_BACKEND_GSTREAMER_INTERNAL_H_
+#ifndef _NAVIA_BACKEND_GSTREAMER_INTERNAL_H_
+#define _NAVIA_BACKEND_GSTREAMER_INTERNAL_H_
 
-#include "NAVConfig.hpp"
+#include "Config.hpp"
 
-#ifdef NAV_BACKEND_GSTREAMER
+#ifdef NAVIA_BACKEND_GSTREAMER
 
 #include <gst/gst.h>
 
@@ -13,11 +13,10 @@
 #include <queue>
 
 #include "Internal.hpp"
-#include "Backend.hpp"
 #include "Common.hpp"
 #include "DynLib.hpp"
 
-namespace nav::gstreamer
+namespace navia::gstreamer
 {
 
 template<typename T>
@@ -34,17 +33,17 @@ public:
 	GStreamerAudioFrame(
 		GStreamerBackend *backend,
 		GstBuffer *buffer,
-		nav_streaminfo_t *sinfo,
+		navia_streaminfo_t *sinfo,
 		size_t si,
 		double pts
 	);
 	~GStreamerAudioFrame() override;
 	size_t getStreamIndex() const noexcept override;
-	const nav_streaminfo_t *getStreamInfo() const noexcept override;
+	const navia_streaminfo_t *getStreamInfo() const noexcept override;
 	double tell() const noexcept override;
 	const uint8_t *const *acquire(ptrdiff_t **strides, size_t *nplanes) override;
 	void release() noexcept override;
-	nav_hwacceltype getHWAccelType() const noexcept override;
+	navia_hwacceltype getHWAccelType() const noexcept override;
 	void *getHWAccelHandle() override;
 
 private:
@@ -54,7 +53,7 @@ private:
 	double pts;
 	GStreamerBackend *f;
 	GstBuffer *buffer;
-	nav_streaminfo_t *streamInfo;
+	navia_streaminfo_t *streamInfo;
 	size_t streamIndex;
 };
 
@@ -65,17 +64,17 @@ public:
 		GStreamerBackend *backend,
 		UniqueGst<GstVideoInfo> &&videoInfo,
 		GstBuffer *buffer,
-		nav_streaminfo_t *sinfo,
+		navia_streaminfo_t *sinfo,
 		size_t si,
 		double pts
 	);
 	~GStreamerVideoFrame() override;
 	size_t getStreamIndex() const noexcept override;
-	const nav_streaminfo_t *getStreamInfo() const noexcept override;
+	const navia_streaminfo_t *getStreamInfo() const noexcept override;
 	double tell() const noexcept override;
 	const uint8_t *const *acquire(ptrdiff_t **strides, size_t *nplanes) override;
 	void release() noexcept override;
-	nav_hwacceltype getHWAccelType() const noexcept override;
+	navia_hwacceltype getHWAccelType() const noexcept override;
 	void *getHWAccelHandle() override;
 
 private:
@@ -85,18 +84,18 @@ private:
 	double pts;
 	GStreamerBackend *f;
 	GstBuffer *buffer;
-	nav_streaminfo_t *streamInfo;
+	navia_streaminfo_t *streamInfo;
 	size_t streamIndex;
 };
 
 class GStreamerState: public State
 {
 public:
-	GStreamerState(GStreamerBackend *backend, nav_input *input);
+	GStreamerState(GStreamerBackend *backend, navia_input *input);
 	~GStreamerState() override;
 	Backend *getBackend() const noexcept override;
 	size_t getStreamCount() const noexcept override;
-	const nav_streaminfo_t *getStreamInfo(size_t index) const noexcept override;
+	const navia_streaminfo_t *getStreamInfo(size_t index) const noexcept override;
 	bool isStreamEnabled(size_t index) const noexcept override;
 	bool setStreamEnabled(size_t index, bool enabled) override;
 	double getDuration() noexcept override;
@@ -104,7 +103,7 @@ public:
 	double setPosition(double off) override;
 	bool prepare() override;
 	bool isPrepared() const noexcept override;
-	nav_frame_t *read() override;
+	navia_frame_t *read() override;
 
 private:
 	struct AppSinkWrapper
@@ -117,10 +116,10 @@ private:
 
 		inline bool ok()
 		{
-			return queue && convert && sink && streamInfo.type != NAV_STREAMTYPE_UNKNOWN;
+			return queue && convert && sink && streamInfo.type != NAVIA_STREAMTYPE_UNKNOWN;
 		}
 
-		nav_streaminfo_t streamInfo;
+		navia_streaminfo_t streamInfo;
 		size_t streamIndex;
 		GStreamerState *self;
 		GstElement *queue, *convert, *sink;
@@ -134,7 +133,7 @@ private:
 	};
 
 	GStreamerBackend *f;
-	nav_input input;
+	navia_input input;
 	UniqueGstObject<GstBus> bus;
 	UniqueGstElement pipeline;
 	GstElement *source, *decoder;
@@ -142,8 +141,8 @@ private:
 	std::priority_queue<Frame*, std::deque<Frame*>, FrameComparator> queuedFrames;
 	bool padProbed, eos, prepared;
 
-	GstCaps *newVideoCapsForNAV();
-	GstCaps *newAudioCapsForNAV();
+	GstCaps *newVideoCapsForNAVIA();
+	GstCaps *newAudioCapsForNAVIA();
 	void clearQueuedFrames();
 	void pollBus(bool noexception = false);
 	Frame *dispatchDecode(GstBuffer *buffer, size_t streamIndex);
@@ -159,21 +158,21 @@ public:
 	GStreamerBackend();
 	~GStreamerBackend() override;
 	const char *getName() const noexcept override;
-	nav_backendtype getType() const noexcept override;
+	navia_backendtype getType() const noexcept override;
 	const char *getInfo() override;
-	State *open(nav_input *input, const char *filename, const nav_settings *settings) override;
+	State *open(navia_input *input, const char *filename, const navia_settings *settings) override;
 
 private:
 	DynLib glib, gobject, gstreamer, gstvideo;
 	std::string version;
 
 public:
-#define _NAV_PROXY_FUNCTION_POINTER(lib, n) decltype(n) *ptr_##n;
+#define _NAVIA_PROXY_FUNCTION_POINTER(lib, n) decltype(n) *ptr_##n;
 #include "GStreamerPointers.h"
-#undef _NAV_PROXY_FUNCTION_POINTER
+#undef _NAVIA_PROXY_FUNCTION_POINTER
 };
 
 }
 
-#endif /* NAV_BACKEND_GSTREAMER */
-#endif /* _NAV_BACKEND_GSTREAMER_INTERNAL_H_ */
+#endif /* NAVIA_BACKEND_GSTREAMER */
+#endif /* _NAVIA_BACKEND_GSTREAMER_INTERNAL_H_ */

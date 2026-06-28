@@ -1,9 +1,9 @@
-#ifndef _NAV_DYNLIB_HPP_
-#define _NAV_DYNLIB_HPP_
+#ifndef _NAVIA_DYNLIB_HPP_
+#define _NAVIA_DYNLIB_HPP_
 
 #include <string>
 
-namespace nav
+namespace navia
 {
 
 class DynLib
@@ -11,10 +11,10 @@ class DynLib
 public:
 	DynLib();
 	DynLib(const std::string &name);
-	DynLib(DynLib&& other);
+	DynLib(DynLib&& other) noexcept;
 	DynLib(DynLib&) = delete;
 	~DynLib();
-	DynLib& operator=(DynLib&& other);
+	DynLib& operator=(DynLib&& other) noexcept;
 
 	template<typename T> bool get(const std::string &name, T* dest)
 	{
@@ -33,4 +33,4 @@ private:
 
 }
 
-#endif /* _NAV_DYNLIB_HPP_ */
+#endif /* _NAVIA_DYNLIB_HPP_ */

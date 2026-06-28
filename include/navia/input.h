@@ -1,15 +1,15 @@
-#ifndef _NAV_INPUT_H_
-#define _NAV_INPUT_H_
+#ifndef _NAVIA_INPUT_H_
+#define _NAVIA_INPUT_H_
 
 #include "types.h"
 
 /**
- * @brief NAV "input stream".
+ * @brief NAVIA "input stream".
  * 
  * For user-defined "input stream", populate the struct accordingly.
  * This struct can be allocated on stack, and is assumed so.
  */
-typedef struct nav_input
+typedef struct navia_input
 {
 	/**
 	 * @brief Function-specific userdata.
@@ -37,7 +37,7 @@ typedef struct nav_input
 	 * @param userdata Function-specific userdata.
 	 * @return Non-zero on success, zero on failure.
 	 */
-	nav_bool (*seek)(void *userdata, uint64_t pos);
+	navia_bool (*seek)(void *userdata, uint64_t pos);
 
 	/**
 	 * @brief Function to get current "input stream" position. Stream must support this!
@@ -79,6 +79,6 @@ typedef struct nav_input
 		return size(userdata);
 	}
 #endif /* __cplusplus */
-} nav_input;
+} navia_input;
 
-#endif /* _NAV_INPUT_H_ */
+#endif /* _NAVIA_INPUT_H_ */

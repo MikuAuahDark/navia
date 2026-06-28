@@ -1,6 +1,6 @@
-#ifdef _NAV_FFMPEG_VERSION
+#ifdef _NAVIA_FFMPEG_VERSION
 
-#include "NAVConfig.hpp"
+#include "Config.hpp"
 
 #include <algorithm>
 #include <numeric>
@@ -25,13 +25,13 @@ extern "C"
 #include "FFmpegBackend.hpp"
 #include "FFmpegInternal.hpp"
 
-#define NAV_FFCALL(name) f->func_##name
+#define NAVIA_FFCALL(name) f->func_##name
 
 static std::vector<AVHWDeviceType> devicePreference = {
 #ifdef _WIN32
 	AV_HWDEVICE_TYPE_D3D11VA,
 #endif
-#if _NAV_FFMPEG_VERSION >= 5
+#if _NAVIA_FFMPEG_VERSION >= 5
 	AV_HWDEVICE_TYPE_VULKAN,
 #endif
 	AV_HWDEVICE_TYPE_VAAPI
@@ -40,7 +40,7 @@ static std::vector<AVHWDeviceType> devicePreference = {
 };
 
 static std::set<AVPixelFormat> supportedHWAccelPixFmt = {
-#if _NAV_FFMPEG_VERSION >= 5
+#if _NAVIA_FFMPEG_VERSION >= 5
 	AV_PIX_FMT_VULKAN,
 #endif
 	AV_PIX_FMT_D3D11,
@@ -57,21 +57,21 @@ static ptrdiff_t getHWDevicePriority(AVHWDeviceType type)
         return ptrdiff_t((devicePreference.size()) + (size_t) type);
 }
 
-static int inputRead(void *nav_input, uint8_t *buf, int buf_size)
+static int inputRead(void *navia_input, uint8_t *buf, int buf_size)
 {
-	struct nav_input *input = (struct nav_input*) nav_input;
+	struct navia_input *input = (struct navia_input*) navia_input;
 	size_t readed = input->readf(buf, buf_size);
 
 	if (readed == 0)
 		return AVERROR_EOF;
-	
+
 	return (int) readed;
 }
 
-static int64_t inputSeek(void *nav_input, int64_t offset, int origin)
+static int64_t inputSeek(void *navia_input, int64_t offset, int origin)
 {
-	struct nav_input *input = (struct nav_input*) nav_input;
-	
+	struct navia_input *input = (struct navia_input*) navia_input;
+
 	int64_t filesize = (int64_t) input->sizef();
 
 	if (origin & AVSEEK_SIZE)
@@ -117,43 +117,43 @@ inline int checkError(decltype(&av_strerror) func_av_strerror, int err) noexcept
 	return err;
 }
 
-static nav_audioformat audioFormatFromAVSampleFormat(AVSampleFormat format)
+static navia_audioformat audioFormatFromAVSampleFormat(AVSampleFormat format)
 {
 	switch (format)
 	{
 		default:
 			return 0;
 		case AV_SAMPLE_FMT_U8:
-			return nav::makeAudioFormat(8, false, false);
+			return navia::makeAudioFormat(8, false, false);
 		case AV_SAMPLE_FMT_S16:
-			return nav::makeAudioFormat(16, false, true);
+			return navia::makeAudioFormat(16, false, true);
 		case AV_SAMPLE_FMT_S32:
-			return nav::makeAudioFormat(32, false, true);
+			return navia::makeAudioFormat(32, false, true);
 		case AV_SAMPLE_FMT_S64:
-			return nav::makeAudioFormat(64, false, true);
+			return navia::makeAudioFormat(64, false, true);
 		case AV_SAMPLE_FMT_FLT:
-			return nav::makeAudioFormat(32, true, true);
+			return navia::makeAudioFormat(32, true, true);
 		case AV_SAMPLE_FMT_DBL:
-			return nav::makeAudioFormat(64, true, true);
+			return navia::makeAudioFormat(64, true, true);
 	}
 }
 
-static std::tuple<nav_pixelformat, AVPixelFormat> getBestPixelFormat(AVPixelFormat pixfmt)
+static std::tuple<navia_pixelformat, AVPixelFormat> getBestPixelFormat(AVPixelFormat pixfmt)
 {
 	switch (pixfmt)
 	{
 		// Unknown
 		default:
-			return std::make_tuple(NAV_PIXELFORMAT_UNKNOWN, AV_PIX_FMT_NONE);
+			return std::make_tuple(NAVIA_PIXELFORMAT_UNKNOWN, AV_PIX_FMT_NONE);
 		// Does not require conversion
 		case AV_PIX_FMT_RGB24:
-			return std::make_tuple(NAV_PIXELFORMAT_RGB8, pixfmt);
+			return std::make_tuple(NAVIA_PIXELFORMAT_RGB8, pixfmt);
 		case AV_PIX_FMT_YUV420P:
-			return std::make_tuple(NAV_PIXELFORMAT_YUV420, pixfmt);
+			return std::make_tuple(NAVIA_PIXELFORMAT_YUV420, pixfmt);
 		case AV_PIX_FMT_YUV444P:
-			return std::make_tuple(NAV_PIXELFORMAT_YUV444, pixfmt);
+			return std::make_tuple(NAVIA_PIXELFORMAT_YUV444, pixfmt);
 		case AV_PIX_FMT_NV12:
-			return std::make_tuple(NAV_PIXELFORMAT_NV12, pixfmt);
+			return std::make_tuple(NAVIA_PIXELFORMAT_NV12, pixfmt);
 		// Require conversions
 		case AV_PIX_FMT_YUYV422:
 		case AV_PIX_FMT_YUV422P:
@@ -206,7 +206,7 @@ static std::tuple<nav_pixelformat, AVPixelFormat> getBestPixelFormat(AVPixelForm
 		case AV_PIX_FMT_YUV440P12BE:
 		case AV_PIX_FMT_AYUV64LE:
 		case AV_PIX_FMT_AYUV64BE:
-#if _NAV_FFMPEG_VERSION >= 5
+#if _NAVIA_FFMPEG_VERSION >= 5
 		case AV_PIX_FMT_YUVA422P12BE:
 		case AV_PIX_FMT_YUVA422P12LE:
 		case AV_PIX_FMT_YUVA444P12BE:
@@ -223,8 +223,8 @@ static std::tuple<nav_pixelformat, AVPixelFormat> getBestPixelFormat(AVPixelForm
 		case AV_PIX_FMT_P216LE:
 		case AV_PIX_FMT_P416BE:
 		case AV_PIX_FMT_P416LE:
-#endif /* _NAV_FFMPEG_VERSION >= 5 */
-#if _NAV_FFMPEG_VERSION >= 6
+#endif /* _NAVIA_FFMPEG_VERSION >= 5 */
+#if _NAVIA_FFMPEG_VERSION >= 6
 		case AV_PIX_FMT_VUYA:
 		case AV_PIX_FMT_VUYX:
 		case AV_PIX_FMT_Y212BE:
@@ -233,14 +233,14 @@ static std::tuple<nav_pixelformat, AVPixelFormat> getBestPixelFormat(AVPixelForm
 		case AV_PIX_FMT_XV30LE:
 		case AV_PIX_FMT_XV36BE:
 		case AV_PIX_FMT_XV36LE:
-#endif /* _NAV_FFMPEG_VERSION >= 6 */
-#if _NAV_FFMPEG_VERSION >= 7
+#endif /* _NAVIA_FFMPEG_VERSION >= 6 */
+#if _NAVIA_FFMPEG_VERSION >= 7
 		case AV_PIX_FMT_P212BE:
 		case AV_PIX_FMT_P212LE:
 		case AV_PIX_FMT_P412BE:
 		case AV_PIX_FMT_P412LE:
-#endif /* _NAV_FFMPEG_VERSION >= 7 */
-#if _NAV_FFMPEG_VERSION >= 8
+#endif /* _NAVIA_FFMPEG_VERSION >= 7 */
+#if _NAVIA_FFMPEG_VERSION >= 8
 		case AV_PIX_FMT_AYUV:
 		case AV_PIX_FMT_UYVA:
 		case AV_PIX_FMT_VYU444:
@@ -254,8 +254,8 @@ static std::tuple<nav_pixelformat, AVPixelFormat> getBestPixelFormat(AVPixelForm
 		case AV_PIX_FMT_YUV444P10MSBLE:
 		case AV_PIX_FMT_YUV444P12MSBBE:
 		case AV_PIX_FMT_YUV444P12MSBLE:
-#endif /* _NAV_FFMPEG_VERSION >= 8 */
-			return std::make_tuple(NAV_PIXELFORMAT_YUV444, AV_PIX_FMT_YUV444P);
+#endif /* _NAVIA_FFMPEG_VERSION >= 8 */
+			return std::make_tuple(NAVIA_PIXELFORMAT_YUV444, AV_PIX_FMT_YUV444P);
 		case AV_PIX_FMT_BGR24:
 		case AV_PIX_FMT_PAL8:
 		case AV_PIX_FMT_BGR8:
@@ -328,25 +328,25 @@ static std::tuple<nav_pixelformat, AVPixelFormat> getBestPixelFormat(AVPixelForm
 		case AV_PIX_FMT_GBRPF32LE:
 		case AV_PIX_FMT_GBRAPF32BE:
 		case AV_PIX_FMT_GBRAPF32LE:
-#if _NAV_FFMPEG_VERSION >= 5
+#if _NAVIA_FFMPEG_VERSION >= 5
 		case AV_PIX_FMT_X2RGB10LE:
 		case AV_PIX_FMT_X2RGB10BE:
 		case AV_PIX_FMT_X2BGR10LE:
 		case AV_PIX_FMT_X2BGR10BE:
-#endif /* _NAV_FFMPEG_VERSION >= 5 */
-#if _NAV_FFMPEG_VERSION >= 6
+#endif /* _NAVIA_FFMPEG_VERSION >= 5 */
+#if _NAVIA_FFMPEG_VERSION >= 6
 		case AV_PIX_FMT_RGBAF16BE:
 		case AV_PIX_FMT_RGBAF16LE:
 		case AV_PIX_FMT_RGBF32BE:
 		case AV_PIX_FMT_RGBF32LE:
 		case AV_PIX_FMT_RGBAF32BE:
 		case AV_PIX_FMT_RGBAF32LE:
-#endif /* _NAV_FFMPEG_VERSION >= 6 */
-#if _NAV_FFMPEG_VERSION >= 7
+#endif /* _NAVIA_FFMPEG_VERSION >= 6 */
+#if _NAVIA_FFMPEG_VERSION >= 7
 		case AV_PIX_FMT_GBRAP14BE:
 		case AV_PIX_FMT_GBRAP14LE:
-#endif /* _NAV_FFMPEG_VERSION >= 7 */
-#if _NAV_FFMPEG_VERSION >= 8
+#endif /* _NAVIA_FFMPEG_VERSION >= 7 */
+#if _NAVIA_FFMPEG_VERSION >= 8
 		case AV_PIX_FMT_RGBF16BE:
 		case AV_PIX_FMT_RGBF16LE:
 		case AV_PIX_FMT_RGBA128BE:
@@ -363,8 +363,8 @@ static std::tuple<nav_pixelformat, AVPixelFormat> getBestPixelFormat(AVPixelForm
 		case AV_PIX_FMT_GBRP10MSBLE:
 		case AV_PIX_FMT_GBRP12MSBBE:
 		case AV_PIX_FMT_GBRP12MSBLE:
-#endif /* _NAV_FFMPEG_VERSION >= 8 */
-			return std::make_tuple(NAV_PIXELFORMAT_RGB8, AV_PIX_FMT_RGB24);
+#endif /* _NAVIA_FFMPEG_VERSION >= 8 */
+			return std::make_tuple(NAVIA_PIXELFORMAT_RGB8, AV_PIX_FMT_RGB24);
 		case AV_PIX_FMT_YUV410P:
 		case AV_PIX_FMT_YUV411P:
 		case AV_PIX_FMT_GRAY8:
@@ -401,13 +401,13 @@ static std::tuple<nav_pixelformat, AVPixelFormat> getBestPixelFormat(AVPixelForm
 		case AV_PIX_FMT_GRAY10LE:
 		case AV_PIX_FMT_GRAY9BE:
 		case AV_PIX_FMT_GRAY9LE:
-#if _NAV_FFMPEG_VERSION >= 5
+#if _NAVIA_FFMPEG_VERSION >= 5
 		case AV_PIX_FMT_GRAY14BE:
 		case AV_PIX_FMT_GRAY14LE:
 		case AV_PIX_FMT_GRAYF32BE:
 		case AV_PIX_FMT_GRAYF32LE:
-#endif /* _NAV_FFMPEG_VERSION >= 5 */
-#if _NAV_FFMPEG_VERSION >= 8
+#endif /* _NAVIA_FFMPEG_VERSION >= 5 */
+#if _NAVIA_FFMPEG_VERSION >= 8
 		case AV_PIX_FMT_GRAYF16BE:
 		case AV_PIX_FMT_GRAYF16LE:
 		case AV_PIX_FMT_GRAY32BE:
@@ -416,18 +416,18 @@ static std::tuple<nav_pixelformat, AVPixelFormat> getBestPixelFormat(AVPixelForm
 		case AV_PIX_FMT_YAF32LE:
 		case AV_PIX_FMT_YAF16BE:
 		case AV_PIX_FMT_YAF16LE:
-#endif /* _NAV_FFMPEG_VERSION >= 8 */
-			return std::make_tuple(NAV_PIXELFORMAT_YUV420, AV_PIX_FMT_YUV420P);
+#endif /* _NAVIA_FFMPEG_VERSION >= 8 */
+			return std::make_tuple(NAVIA_PIXELFORMAT_YUV420, AV_PIX_FMT_YUV420P);
 		case AV_PIX_FMT_NV21:
 		case AV_PIX_FMT_P010LE:
 		case AV_PIX_FMT_P010BE:
 		case AV_PIX_FMT_P016LE:
 		case AV_PIX_FMT_P016BE:
-#if _NAV_FFMPEG_VERSION >= 6
+#if _NAVIA_FFMPEG_VERSION >= 6
 		case AV_PIX_FMT_P012LE:
 		case AV_PIX_FMT_P012BE:
-#endif /* _NAV_FFMPEG_VERSION >= 6 */
-			return std::make_tuple(NAV_PIXELFORMAT_NV12, AV_PIX_FMT_NV12);
+#endif /* _NAVIA_FFMPEG_VERSION >= 6 */
+			return std::make_tuple(NAVIA_PIXELFORMAT_NV12, AV_PIX_FMT_NV12);
 	}
 }
 
@@ -461,14 +461,14 @@ struct CallOnLeave
 	T *ptr;
 };
 
-namespace nav::_NAV_FFMPEG_NAMESPACE
+namespace navia::_NAVIA_FFMPEG_NAMESPACE
 {
 
-FFmpegFrame::FFmpegFrame(FFmpegBackend *f, nav_streaminfo_t *sinfo, AVFrame *frame, const AVCodecContext *cctx, double pts, size_t si)
+FFmpegFrame::FFmpegFrame(FFmpegBackend *f, navia_streaminfo_t *sinfo, AVFrame *frame, const AVCodecContext *cctx, double pts, size_t si)
 : f(f) // must be first
 , acquireData()
 , pts(pts)
-, frame(NAV_FFCALL(av_frame_clone)(frame))
+, frame(NAVIA_FFCALL(av_frame_clone)(frame))
 , streamInfo(sinfo)
 , index(si)
 , codecContext(cctx)
@@ -482,7 +482,7 @@ size_t FFmpegFrame::getStreamIndex() const noexcept
 	return index;
 }
 
-const nav_streaminfo_t *FFmpegFrame::getStreamInfo() const noexcept
+const navia_streaminfo_t *FFmpegFrame::getStreamInfo() const noexcept
 {
 	return streamInfo;
 }
@@ -501,17 +501,17 @@ const uint8_t *const *FFmpegFrame::acquire(ptrdiff_t **strides, size_t *nplanes)
 		if (codecContext->hw_device_ctx)
 		{
 			// Hardware accelerated. Download the frame to CPU.
-			AVFrame *swFrame = NAV_FFCALL(av_frame_alloc)();
+			AVFrame *swFrame = NAVIA_FFCALL(av_frame_alloc)();
 			if (swFrame == nullptr)
 			{
-				nav::error::set("Cannot allocate CPU frame.");
+				navia::error::set("Cannot allocate CPU frame.");
 				return nullptr;
 			}
 
-			if (int r = NAV_FFCALL(av_hwframe_transfer_data)(swFrame, frame, 0); r < 0)
+			if (int r = NAVIA_FFCALL(av_hwframe_transfer_data)(swFrame, frame, 0); r < 0)
 			{
-				NAV_FFCALL(av_frame_free)(&swFrame);
-				throwFromAVError(NAV_FFCALL(av_strerror), r);
+				NAVIA_FFCALL(av_frame_free)(&swFrame);
+				throwFromAVError(NAVIA_FFCALL(av_strerror), r);
 			}
 
 			targetFrame = swFrame;
@@ -540,25 +540,25 @@ void FFmpegFrame::release() noexcept
 	if (codecContext->hw_device_ctx && acquireData.source)
 	{
 		AVFrame *swFrame = (AVFrame *) acquireData.source;
-		NAV_FFCALL(av_frame_free)(&swFrame);
+		NAVIA_FFCALL(av_frame_free)(&swFrame);
 		acquireData.source = nullptr;
 	}
 }
 
-nav_hwacceltype FFmpegFrame::getHWAccelType() const noexcept
+navia_hwacceltype FFmpegFrame::getHWAccelType() const noexcept
 {
 	switch ((AVPixelFormat) frame->format)
 	{
 		case AV_PIX_FMT_D3D11:
-			return NAV_HWACCELTYPE_D3D11;
-#if _NAV_FFMPEG_VERSION >= 5
+			return NAVIA_HWACCELTYPE_D3D11;
+#if _NAVIA_FFMPEG_VERSION >= 5
 		case AV_PIX_FMT_VULKAN:
-			return NAV_HWACCELTYPE_VULKAN;
+			return NAVIA_HWACCELTYPE_VULKAN;
 #endif
 		case AV_PIX_FMT_VAAPI:
-			return NAV_HWACCELTYPE_VAAPI;
+			return NAVIA_HWACCELTYPE_VAAPI;
 		default:
-			return NAV_HWACCELTYPE_NONE;
+			return NAVIA_HWACCELTYPE_NONE;
 	}
 }
 
@@ -568,15 +568,15 @@ void *FFmpegFrame::getHWAccelHandle()
 	{
 		case AV_PIX_FMT_D3D11:
 			return frame->data[0];
-#if _NAV_FFMPEG_VERSION >= 5
+#if _NAVIA_FFMPEG_VERSION >= 5
 		case AV_PIX_FMT_VULKAN:
-			nav::error::set("NYI");
+			navia::error::set("NYI");
 			return nullptr; // TODO: this should be AVVKFrame
 #endif
 		case AV_PIX_FMT_VAAPI:
 			return frame->data[3];
 	}
-	nav::error::set("Not hardware accelerated or unknown hardware acceleration");
+	navia::error::set("Not hardware accelerated or unknown hardware acceleration");
 	return nullptr;
 }
 
@@ -585,19 +585,19 @@ FFmpegFrame::~FFmpegFrame()
 	if (frame)
 	{
 		release();
-		NAV_FFCALL(av_frame_unref)(frame);
-		NAV_FFCALL(av_frame_free)(&frame);
+		NAVIA_FFCALL(av_frame_unref)(frame);
+		NAVIA_FFCALL(av_frame_free)(&frame);
 	}
 }
 
 
 
-FFmpegState::FFmpegState(FFmpegBackend *backend, UniqueAVFormatContext &fmtctx, UniqueAVIOContext &ioctx, const nav_settings &settings)
+FFmpegState::FFmpegState(FFmpegBackend *backend, UniqueAVFormatContext &fmtctx, UniqueAVIOContext &ioctx, const navia_settings &settings)
 : f(backend)
 , formatContext(std::move(fmtctx))
 , ioContext(std::move(ioctx))
-, tempPacket(NAV_FFCALL(av_packet_alloc)(), {NAV_FFCALL(av_packet_free)})
-, tempFrame(NAV_FFCALL(av_frame_alloc)(), {NAV_FFCALL(av_frame_free)})
+, tempPacket(NAVIA_FFCALL(av_packet_alloc)(), {NAVIA_FFCALL(av_packet_free)})
+, tempFrame(NAVIA_FFCALL(av_frame_alloc)(), {NAVIA_FFCALL(av_frame_free)})
 , position(0.0)
 , eof(false)
 , prepared(false)
@@ -610,7 +610,7 @@ FFmpegState::FFmpegState(FFmpegBackend *backend, UniqueAVFormatContext &fmtctx, 
 	if (!tempPacket)
 		throw std::runtime_error("Cannot allocate AVPacket");
 
-	checkError(NAV_FFCALL(av_strerror), NAV_FFCALL(avformat_find_stream_info)(formatContext.get(), nullptr));
+	checkError(NAVIA_FFCALL(av_strerror), NAVIA_FFCALL(avformat_find_stream_info)(formatContext.get(), nullptr));
 
 	streamInfo.reserve(formatContext->nb_streams);
 	decoders.reserve(formatContext->nb_streams);
@@ -620,7 +620,7 @@ FFmpegState::FFmpegState(FFmpegBackend *backend, UniqueAVFormatContext &fmtctx, 
 
 	for (unsigned int i = 0; i < formatContext->nb_streams; i++)
 	{
-		nav_streaminfo_t sinfo = {NAV_STREAMTYPE_UNKNOWN};
+		navia_streaminfo_t sinfo = {NAVIA_STREAMTYPE_UNKNOWN};
 		AVStream *stream = formatContext->streams[i];
 		const AVCodec *codec = nullptr;
 		AVCodecContext *codecContext = nullptr;
@@ -633,19 +633,19 @@ FFmpegState::FFmpegState(FFmpegBackend *backend, UniqueAVFormatContext &fmtctx, 
 			case AVMEDIA_TYPE_AUDIO:
 			case AVMEDIA_TYPE_VIDEO:
 			{
-				codec = NAV_FFCALL(avcodec_find_decoder)(stream->codecpar->codec_id);
+				codec = NAVIA_FFCALL(avcodec_find_decoder)(stream->codecpar->codec_id);
 				good = codec != nullptr;
 				decltype(AVCodecContext::get_format) oldFormat = nullptr;
 
 				if (good)
 				{
-					codecContext = NAV_FFCALL(avcodec_alloc_context3)(codec);
+					codecContext = NAVIA_FFCALL(avcodec_alloc_context3)(codec);
 					good = codecContext;
 				}
 
 				if (good)
 				{
-					good = NAV_FFCALL(avcodec_parameters_to_context)(codecContext, stream->codecpar) >= 0;
+					good = NAVIA_FFCALL(avcodec_parameters_to_context)(codecContext, stream->codecpar) >= 0;
 					oldFormat = codecContext->get_format;
 					codecContext->get_format = pickPixelFormat;
 				}
@@ -659,20 +659,20 @@ FFmpegState::FFmpegState(FFmpegBackend *backend, UniqueAVFormatContext &fmtctx, 
 					{
 						for (int j = 0; j < std::numeric_limits<int>::max(); j++)
 						{
-							const AVCodecHWConfig *hwconfig = NAV_FFCALL(avcodec_get_hw_config)(codec, j);
+							const AVCodecHWConfig *hwconfig = NAVIA_FFCALL(avcodec_get_hw_config)(codec, j);
 							if (hwconfig == nullptr)
 								break;
 
 							if (hwconfig->device_type != hwacceltype)
 								continue;
-							
+
 							if (supportedHWAccelPixFmt.find(hwconfig->pix_fmt) == supportedHWAccelPixFmt.end())
 								// Not a supported hardware pixel format
 								continue;
 
 							if (hwconfig->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX)
 							{
-								if (NAV_FFCALL(av_hwdevice_ctx_create)(
+								if (NAVIA_FFCALL(av_hwdevice_ctx_create)(
 									&codecContext->hw_device_ctx,
 									hwacceltype,
 									nullptr,
@@ -702,7 +702,7 @@ FFmpegState::FFmpegState(FFmpegBackend *backend, UniqueAVFormatContext &fmtctx, 
 						codecContext->get_format = oldFormat;
 
 					codecContext->thread_count = (int) settings.max_threads;
-					good = NAV_FFCALL(avcodec_open2)(codecContext, codec, nullptr) >= 0;
+					good = NAVIA_FFCALL(avcodec_open2)(codecContext, codec, nullptr) >= 0;
 				}
 
 				if (good)
@@ -710,12 +710,12 @@ FFmpegState::FFmpegState(FFmpegBackend *backend, UniqueAVFormatContext &fmtctx, 
 					if (stream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO)
 					{
 						AVSampleFormat originalFormat = (AVSampleFormat) stream->codecpar->format;
-						AVSampleFormat packedFormat = NAV_FFCALL(av_get_packed_sample_fmt)(originalFormat);
+						AVSampleFormat packedFormat = NAVIA_FFCALL(av_get_packed_sample_fmt)(originalFormat);
 						if (packedFormat != originalFormat)
 						{
 							// Need to resample
-#if _NAV_FFMPEG_VERSION >= 6
-							good = NAV_FFCALL(swr_alloc_set_opts2)(
+#if _NAVIA_FFMPEG_VERSION >= 6
+							good = NAVIA_FFCALL(swr_alloc_set_opts2)(
 								&resampler,
 								&stream->codecpar->ch_layout,
 								packedFormat,
@@ -730,7 +730,7 @@ FFmpegState::FFmpegState(FFmpegBackend *backend, UniqueAVFormatContext &fmtctx, 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
-							resampler = NAV_FFCALL(swr_alloc_set_opts)(
+							resampler = NAVIA_FFCALL(swr_alloc_set_opts)(
 								nullptr,
 								stream->codecpar->channel_layout,
 								packedFormat,
@@ -748,14 +748,14 @@ FFmpegState::FFmpegState(FFmpegBackend *backend, UniqueAVFormatContext &fmtctx, 
 						}
 
 						if (good)
-							good = NAV_FFCALL(swr_init)(resampler) >= 0;
+							good = NAVIA_FFCALL(swr_init)(resampler) >= 0;
 
 						if (good)
 						{
 							// Audio stream
 							sinfo.audio.format = audioFormatFromAVSampleFormat(packedFormat);
 							sinfo.audio.sample_rate = stream->codecpar->sample_rate;
-#if _NAV_FFMPEG_VERSION >= 6
+#if _NAVIA_FFMPEG_VERSION >= 6
 							sinfo.audio.nchannels = stream->codecpar->ch_layout.nb_channels;
 #else
 #ifdef __GNUC__
@@ -767,7 +767,7 @@ FFmpegState::FFmpegState(FFmpegBackend *backend, UniqueAVFormatContext &fmtctx, 
 #pragma GCC diagnostic pop
 #endif
 #endif
-							sinfo.type = NAV_STREAMTYPE_AUDIO;
+							sinfo.type = NAVIA_STREAMTYPE_AUDIO;
 						}
 					}
 					else
@@ -786,7 +786,7 @@ FFmpegState::FFmpegState(FFmpegBackend *backend, UniqueAVFormatContext &fmtctx, 
 								good = false;
 							else
 							{
-								rescaler = NAV_FFCALL(sws_getContext)(
+								rescaler = NAVIA_FFCALL(sws_getContext)(
 									stream->codecpar->width,
 									stream->codecpar->height,
 									originalFormat,
@@ -802,7 +802,7 @@ FFmpegState::FFmpegState(FFmpegBackend *backend, UniqueAVFormatContext &fmtctx, 
 						if (good)
 						{
 							// Video stream
-							sinfo.type = NAV_STREAMTYPE_VIDEO;
+							sinfo.type = NAVIA_STREAMTYPE_VIDEO;
 							sinfo.video.width = (uint32_t) stream->codecpar->width;
 							sinfo.video.height = (uint32_t) stream->codecpar->height;
 							sinfo.video.fps = ffmpeg_common::derationalize(stream->avg_frame_rate);
@@ -821,12 +821,12 @@ FFmpegState::FFmpegState(FFmpegBackend *backend, UniqueAVFormatContext &fmtctx, 
 		if (!good)
 		{
 			stream->discard = AVDISCARD_ALL;
-			NAV_FFCALL(avcodec_free_context)(&codecContext);
+			NAVIA_FFCALL(avcodec_free_context)(&codecContext);
 
 			if (rescaler)
 			{
-				NAV_FFCALL(swr_free)(&resampler);
-				NAV_FFCALL(sws_freeContext)(rescaler);
+				NAVIA_FFCALL(swr_free)(&resampler);
+				NAVIA_FFCALL(sws_freeContext)(rescaler);
 				rescaler = nullptr;
 			}
 		}
@@ -841,11 +841,11 @@ FFmpegState::FFmpegState(FFmpegBackend *backend, UniqueAVFormatContext &fmtctx, 
 FFmpegState::~FFmpegState()
 {
 	for (AVCodecContext *&decoder: decoders)
-		NAV_FFCALL(avcodec_free_context)(&decoder);
+		NAVIA_FFCALL(avcodec_free_context)(&decoder);
 	for (SwrContext *&resampler: resamplers)
-		NAV_FFCALL(swr_free)(&resampler);
+		NAVIA_FFCALL(swr_free)(&resampler);
 	for (SwsContext *&rescaler: rescalers)
-		NAV_FFCALL(sws_freeContext)(rescaler);
+		NAVIA_FFCALL(sws_freeContext)(rescaler);
 }
 
 Backend *FFmpegState::getBackend() const noexcept
@@ -858,11 +858,11 @@ size_t FFmpegState::getStreamCount() const noexcept
 	return formatContext->nb_streams;
 }
 
-const nav_streaminfo_t *FFmpegState::getStreamInfo(size_t index) const noexcept
+const navia_streaminfo_t *FFmpegState::getStreamInfo(size_t index) const noexcept
 {
 	if (index >= streamInfo.size())
 	{
-		nav::error::set("Stream index out of range");
+		navia::error::set("Stream index out of range");
 		return nullptr;
 	}
 
@@ -873,7 +873,7 @@ bool FFmpegState::isStreamEnabled(size_t index) const noexcept
 {
 	if (index >= streamInfo.size())
 	{
-		nav::error::set("Stream index out of range");
+		navia::error::set("Stream index out of range");
 		return false;
 	}
 
@@ -884,13 +884,13 @@ bool FFmpegState::setStreamEnabled(size_t index, bool enabled)
 {
 	if (index >= streamInfo.size())
 	{
-		nav::error::set("Stream index out of range");
+		navia::error::set("Stream index out of range");
 		return false;
 	}
 
 	if (prepared)
 	{
-		nav::error::set("Decoder already initialized");
+		navia::error::set("Decoder already initialized");
 		return false;
 	}
 
@@ -912,10 +912,10 @@ double FFmpegState::setPosition(double off)
 {
 	int64_t pos = int64_t(off * AV_TIME_BASE);
 
-	checkError(NAV_FFCALL(av_strerror), NAV_FFCALL(avformat_flush)(formatContext.get()));
+	checkError(NAVIA_FFCALL(av_strerror), NAVIA_FFCALL(avformat_flush)(formatContext.get()));
 	checkError(
-		NAV_FFCALL(av_strerror),
-		NAV_FFCALL(avformat_seek_file)(
+		NAVIA_FFCALL(av_strerror),
+		NAVIA_FFCALL(avformat_seek_file)(
 			formatContext.get(),
 			-1,
 			std::numeric_limits<int64_t>::min(),
@@ -928,7 +928,7 @@ double FFmpegState::setPosition(double off)
 	for (AVCodecContext *decoder: decoders)
 	{
 		if (decoder)
-			NAV_FFCALL(avcodec_flush_buffers)(decoder);
+			NAVIA_FFCALL(avcodec_flush_buffers)(decoder);
 	}
 	// No need to flush swr as we're not doing sample-rate conversion.
 
@@ -946,9 +946,9 @@ bool FFmpegState::prepare()
 		{
 			if (formatContext->streams[i]->discard == AVDISCARD_ALL)
 			{
-				NAV_FFCALL(avcodec_free_context)(&decoders[i]);
-				NAV_FFCALL(swr_free)(&resamplers[i]);
-				NAV_FFCALL(sws_freeContext)(rescalers[i]);
+				NAVIA_FFCALL(avcodec_free_context)(&decoders[i]);
+				NAVIA_FFCALL(swr_free)(&resamplers[i]);
+				NAVIA_FFCALL(sws_freeContext)(rescalers[i]);
 				// Leave the streaminfo intact though, don't modify it.
 			}
 		}
@@ -964,7 +964,7 @@ bool FFmpegState::isPrepared() const noexcept
 	return prepared;
 }
 
-nav_frame_t *FFmpegState::read()
+navia_frame_t *FFmpegState::read()
 {
 	while (true)
 	{
@@ -974,11 +974,11 @@ nav_frame_t *FFmpegState::read()
 		if (tempPacket->buf)
 		{
 			// Pull frames
-			err = NAV_FFCALL(avcodec_receive_frame)(decoders[tempPacket->stream_index], tempFrame.get());
+			err = NAVIA_FFCALL(avcodec_receive_frame)(decoders[tempPacket->stream_index], tempFrame.get());
 			if (err >= 0)
 			{
 				// Has frame
-				CallOnLeave<AVFrame> frameGuard(NAV_FFCALL(av_frame_unref), tempFrame.get());
+				CallOnLeave<AVFrame> frameGuard(NAVIA_FFCALL(av_frame_unref), tempFrame.get());
 				position = ffmpeg_common::derationalize(
 					tempFrame->pts,
 					formatContext->streams[tempPacket->stream_index]->time_base
@@ -988,11 +988,11 @@ nav_frame_t *FFmpegState::read()
 			else
 			{
 				// No frame for now
-				NAV_FFCALL(av_packet_unref)(tempPacket.get());
+				NAVIA_FFCALL(av_packet_unref)(tempPacket.get());
 
 				if (err != AVERROR_EOF && err != AVERROR(EAGAIN))
 					// Other error
-					checkError(NAV_FFCALL(av_strerror), err);
+					checkError(NAVIA_FFCALL(av_strerror), err);
 			}
 		}
 
@@ -1005,11 +1005,11 @@ nav_frame_t *FFmpegState::read()
 
 				if (codecContext && !streamEofs[i])
 				{
-					err = NAV_FFCALL(avcodec_receive_frame)(codecContext, tempFrame.get());
+					err = NAVIA_FFCALL(avcodec_receive_frame)(codecContext, tempFrame.get());
 					if (err >= 0)
 					{
 						// Has frame
-						CallOnLeave<AVFrame> frameGuard(NAV_FFCALL(av_frame_unref), tempFrame.get());
+						CallOnLeave<AVFrame> frameGuard(NAVIA_FFCALL(av_frame_unref), tempFrame.get());
 						position = ffmpeg_common::derationalize(tempFrame->pts, formatContext->streams[i]->time_base);
 						return decode(tempFrame.get(), i);
 					}
@@ -1018,7 +1018,7 @@ nav_frame_t *FFmpegState::read()
 						streamEofs[i] = true;
 					else
 						// Unhandled error
-						checkError(NAV_FFCALL(av_strerror), err);
+						checkError(NAVIA_FFCALL(av_strerror), err);
 				}
 			}
 
@@ -1028,13 +1028,13 @@ nav_frame_t *FFmpegState::read()
 		else
 		{
 			// Read packet
-			err = NAV_FFCALL(av_read_frame)(formatContext.get(), tempPacket.get());
+			err = NAVIA_FFCALL(av_read_frame)(formatContext.get(), tempPacket.get());
 			if (err == 0)
 			{
 				if (formatContext->streams[tempPacket->stream_index]->discard == AVDISCARD_ALL)
-					NAV_FFCALL(av_packet_unref)(tempPacket.get());
+					NAVIA_FFCALL(av_packet_unref)(tempPacket.get());
 				else
-					checkError(NAV_FFCALL(av_strerror), NAV_FFCALL(avcodec_send_packet)(decoders[tempPacket->stream_index], tempPacket.get()));
+					checkError(NAVIA_FFCALL(av_strerror), NAVIA_FFCALL(avcodec_send_packet)(decoders[tempPacket->stream_index], tempPacket.get()));
 			}
 			else if (err == AVERROR_EOF)
 			{
@@ -1042,24 +1042,24 @@ nav_frame_t *FFmpegState::read()
 				for (AVCodecContext *decoder: decoders)
 				{
 					if (decoder)
-						NAV_FFCALL(avcodec_send_packet)(decoder, nullptr);
+						NAVIA_FFCALL(avcodec_send_packet)(decoder, nullptr);
 				}
 
 				eof = true;
 			}
 			else
-				checkError(NAV_FFCALL(av_strerror), err);
+				checkError(NAVIA_FFCALL(av_strerror), err);
 		}
 	}
 }
 
-nav_frame_t *FFmpegState::decode(AVFrame *frame, size_t index)
+navia_frame_t *FFmpegState::decode(AVFrame *frame, size_t index)
 {
-	nav_streaminfo_t *streamInfo = &this->streamInfo[index];
+	navia_streaminfo_t *streamInfo = &this->streamInfo[index];
 
 	switch (streamInfo->type)
 	{
-		case NAV_STREAMTYPE_AUDIO:
+		case NAVIA_STREAMTYPE_AUDIO:
 		{
 			// Decode audio
 			SwrContext *resampler = resamplers[index];
@@ -1078,12 +1078,12 @@ nav_frame_t *FFmpegState::decode(AVFrame *frame, size_t index)
 				resampler ? nullptr : frame->data[0],
 				(
 					((size_t) frame->nb_samples)
-#if _NAV_FFMPEG_VERSION >= 6
+#if _NAVIA_FFMPEG_VERSION >= 6
 					* frame->ch_layout.nb_channels
 #else
 					* frame->channels
 #endif
-					* NAV_AUDIOFORMAT_BYTESIZE(streamInfo->audio.format)
+					* NAVIA_AUDIOFORMAT_BYTESIZE(streamInfo->audio.format)
 				)
 			));
 #ifdef __GNUC__
@@ -1095,14 +1095,14 @@ nav_frame_t *FFmpegState::decode(AVFrame *frame, size_t index)
 				uint8_t *tempBuffer[AV_NUM_DATA_POINTERS] = {result->pointer(), nullptr};
 
 				checkError(
-					NAV_FFCALL(av_strerror),
-					NAV_FFCALL(swr_convert)(resampler, tempBuffer, frame->nb_samples, (const uint8_t**) frame->data, frame->nb_samples)
+					NAVIA_FFCALL(av_strerror),
+					NAVIA_FFCALL(swr_convert)(resampler, tempBuffer, frame->nb_samples, (const uint8_t**) frame->data, frame->nb_samples)
 				);
 			}
 
 			return result.release();
 		}
-		case NAV_STREAMTYPE_VIDEO:
+		case NAVIA_STREAMTYPE_VIDEO:
 		{
 			// Decode video
 			SwsContext *rescaler = rescalers[index];
@@ -1120,14 +1120,14 @@ nav_frame_t *FFmpegState::decode(AVFrame *frame, size_t index)
 			switch (streamInfo->video.format)
 			{
 				default:
-					throw std::runtime_error("internal error @ " __FILE__ ":" NAV_STRINGIZE(__LINE__) ". Please report!");
-				case NAV_PIXELFORMAT_RGB8:
+					throw std::runtime_error("internal error @ " __FILE__ ":" NAVIA_STRINGIZE(__LINE__) ". Please report!");
+				case NAVIA_PIXELFORMAT_RGB8:
 				{
 					bufferSetup[0] = result->pointer();
 					linesizeSetup[0] = (int) streamInfo->video.width * 3;
 					break;
 				}
-				case NAV_PIXELFORMAT_YUV420:
+				case NAVIA_PIXELFORMAT_YUV420:
 				{
 					size_t halfdim = ((size_t) (streamInfo->video.width + 1) / 2) * ((streamInfo->video.height + 1) / 2);
 					bufferSetup[0] = result->pointer();
@@ -1138,7 +1138,7 @@ nav_frame_t *FFmpegState::decode(AVFrame *frame, size_t index)
 					linesizeSetup[2] = linesizeSetup[1];
 					break;
 				}
-				case NAV_PIXELFORMAT_YUV444:
+				case NAVIA_PIXELFORMAT_YUV444:
 				{
 					bufferSetup[0] = result->pointer();
 					linesizeSetup[0] = streamInfo->video.width;
@@ -1148,7 +1148,7 @@ nav_frame_t *FFmpegState::decode(AVFrame *frame, size_t index)
 					linesizeSetup[2] = linesizeSetup[1];
 					break;
 				}
-				case NAV_PIXELFORMAT_NV12:
+				case NAVIA_PIXELFORMAT_NV12:
 				{
 					bufferSetup[0] = result->pointer();
 					linesizeSetup[0] = streamInfo->video.width;
@@ -1160,8 +1160,8 @@ nav_frame_t *FFmpegState::decode(AVFrame *frame, size_t index)
 
 			// Rescale handles flip.
 			checkError(
-				NAV_FFCALL(av_strerror),
-				NAV_FFCALL(sws_scale)(
+				NAVIA_FFCALL(av_strerror),
+				NAVIA_FFCALL(sws_scale)(
 					rescaler,
 					frame->data,
 					frame->linesize,
@@ -1174,13 +1174,13 @@ nav_frame_t *FFmpegState::decode(AVFrame *frame, size_t index)
 			return result.release();
 		}
 		default:
-			throw std::runtime_error("internal error @ " __FILE__ ":" NAV_STRINGIZE(__LINE__) ". Please report!");
+			throw std::runtime_error("internal error @ " __FILE__ ":" NAVIA_STRINGIZE(__LINE__) ". Please report!");
 	}
 }
 
 bool FFmpegState::canDecode(size_t index)
 {
-	return streamInfo[index].type != NAV_STREAMTYPE_UNKNOWN && formatContext->streams[index]->discard == AVDISCARD_ALL;
+	return streamInfo[index].type != NAVIA_STREAMTYPE_UNKNOWN && formatContext->streams[index]->discard == AVDISCARD_ALL;
 }
 
 std::vector<AVHWDeviceType> FFmpegState::getHWAccels()
@@ -1188,7 +1188,7 @@ std::vector<AVHWDeviceType> FFmpegState::getHWAccels()
 	std::vector<AVHWDeviceType> devices;
 
 	AVHWDeviceType type = AV_HWDEVICE_TYPE_NONE;
-	while ((type = NAV_FFCALL(av_hwdevice_iterate_types)(type)) != AV_HWDEVICE_TYPE_NONE)
+	while ((type = NAVIA_FFCALL(av_hwdevice_iterate_types)(type)) != AV_HWDEVICE_TYPE_NONE)
 		devices.push_back(type);
 
 	std::sort(devices.begin(), devices.end(), [](AVHWDeviceType a, AVHWDeviceType b)
@@ -1210,54 +1210,54 @@ AVPixelFormat FFmpegState::pickPixelFormat(AVCodecContext *s, const AVPixelForma
 	return AV_PIX_FMT_NONE;
 }
 
-#undef NAV_FFCALL
-#define NAV_FFCALL(n) this->func_##n
+#undef NAVIA_FFCALL
+#define NAVIA_FFCALL(n) this->func_##n
 
 FFmpegBackend::FFmpegBackend()
-: avutil(_NAV_FFMPEG_LIB_NAME("avutil", LIBAVUTIL_VERSION_MAJOR))
-, avcodec(_NAV_FFMPEG_LIB_NAME("avcodec", LIBAVCODEC_VERSION_MAJOR))
-, avformat(_NAV_FFMPEG_LIB_NAME("avformat", LIBAVFORMAT_VERSION_MAJOR))
-, swresample(_NAV_FFMPEG_LIB_NAME("swresample", LIBSWRESAMPLE_VERSION_MAJOR))
-, swscale(_NAV_FFMPEG_LIB_NAME("swscale", LIBSWSCALE_VERSION_MAJOR))
+: avutil(_NAVIA_FFMPEG_LIB_NAME("avutil", LIBAVUTIL_VERSION_MAJOR))
+, avcodec(_NAVIA_FFMPEG_LIB_NAME("avcodec", LIBAVCODEC_VERSION_MAJOR))
+, avformat(_NAVIA_FFMPEG_LIB_NAME("avformat", LIBAVFORMAT_VERSION_MAJOR))
+, swresample(_NAVIA_FFMPEG_LIB_NAME("swresample", LIBSWRESAMPLE_VERSION_MAJOR))
+, swscale(_NAVIA_FFMPEG_LIB_NAME("swscale", LIBSWSCALE_VERSION_MAJOR))
 , info()
-#define _NAV_PROXY_FUNCTION_POINTER(lib, n) , func_##n(nullptr)
+#define _NAVIA_PROXY_FUNCTION_POINTER(lib, n) , func_##n(nullptr)
 #include "FFmpegPointers.h"
-#undef _NAV_PROXY_FUNCTION_POINTER
+#undef _NAVIA_PROXY_FUNCTION_POINTER
 {
 	if (
-#define _NAV_PROXY_FUNCTION_POINTER(lib, n) !lib.get(#n, &func_##n) ||
+#define _NAVIA_PROXY_FUNCTION_POINTER(lib, n) !lib.get(#n, &func_##n) ||
 #include "FFmpegPointers.h"
-#undef _NAV_PROXY_FUNCTION_POINTER
+#undef _NAVIA_PROXY_FUNCTION_POINTER
 		!true // needed to fix the preprocessor stuff
 	)
 		throw std::runtime_error("Cannot load FFmpeg function pointer");
 
-	if (!isVersionCompatible<LIBAVCODEC_VERSION_INT>(NAV_FFCALL(avcodec_version)))
+	if (!isVersionCompatible<LIBAVCODEC_VERSION_INT>(NAVIA_FFCALL(avcodec_version)))
 		throw std::runtime_error("avcodec version mismatch");
-	if (!isVersionCompatible<LIBAVFORMAT_VERSION_INT>(NAV_FFCALL(avformat_version)))
+	if (!isVersionCompatible<LIBAVFORMAT_VERSION_INT>(NAVIA_FFCALL(avformat_version)))
 		throw std::runtime_error("avformat version mismatch");
-	if (!isVersionCompatible<LIBAVUTIL_VERSION_INT>(NAV_FFCALL(avutil_version)))
+	if (!isVersionCompatible<LIBAVUTIL_VERSION_INT>(NAVIA_FFCALL(avutil_version)))
 		throw std::runtime_error("avutil version mismatch");
-	if (!isVersionCompatible<LIBSWRESAMPLE_VERSION_INT>(NAV_FFCALL(swresample_version)))
+	if (!isVersionCompatible<LIBSWRESAMPLE_VERSION_INT>(NAVIA_FFCALL(swresample_version)))
 		throw std::runtime_error("swresample version mismatch");
-	if (!isVersionCompatible<LIBSWSCALE_VERSION_INT>(NAV_FFCALL(swscale_version)))
+	if (!isVersionCompatible<LIBSWSCALE_VERSION_INT>(NAVIA_FFCALL(swscale_version)))
 		throw std::runtime_error("swscale version mismatch");
 }
 
 FFmpegBackend::~FFmpegBackend()
 {}
 
-State *FFmpegBackend::open(nav_input *input, const char *filename, const nav_settings *settings)
+State *FFmpegBackend::open(navia_input *input, const char *filename, const navia_settings *settings)
 {
 	constexpr int BUFSIZE = 4096;
 
-	UniqueAVFormatContext formatContext(NAV_FFCALL(avformat_alloc_context)(), NAV_FFCALL(avformat_free_context));
+	UniqueAVFormatContext formatContext(NAVIA_FFCALL(avformat_alloc_context)(), NAVIA_FFCALL(avformat_free_context));
 	if (!formatContext)
 		throw std::runtime_error("Cannot allocate AVFormatContext");
 
 	UniqueAVIOContext ioContext(
-		NAV_FFCALL(avio_alloc_context)(
-			(unsigned char*) NAV_FFCALL(av_malloc)(BUFSIZE),
+		NAVIA_FFCALL(avio_alloc_context)(
+			(unsigned char*) NAVIA_FFCALL(av_malloc)(BUFSIZE),
 			BUFSIZE,
 			0,
 			input,
@@ -1265,7 +1265,7 @@ State *FFmpegBackend::open(nav_input *input, const char *filename, const nav_set
 			nullptr,
 			inputSeek
 		),
-		{NAV_FFCALL(avio_context_free)}
+		{NAVIA_FFCALL(avio_context_free)}
 	);
 	if (!ioContext)
 		throw std::runtime_error("Cannot allocate AVIOContext");
@@ -1276,10 +1276,10 @@ State *FFmpegBackend::open(nav_input *input, const char *filename, const nav_set
 	AVFormatContext *tempFormatContext = formatContext.get();
 	int errcode = 0;
 
-	if ((errcode = NAV_FFCALL(avformat_open_input)(&tempFormatContext, filename, nullptr, nullptr)) < 0)
+	if ((errcode = NAVIA_FFCALL(avformat_open_input)(&tempFormatContext, filename, nullptr, nullptr)) < 0)
 	{
 		formatContext.release(); // prevent double-free
-		throwFromAVError(NAV_FFCALL(av_strerror), errcode);
+		throwFromAVError(NAVIA_FFCALL(av_strerror), errcode);
 	}
 
 	return new FFmpegState(this, formatContext, ioContext, *settings);
@@ -1287,12 +1287,12 @@ State *FFmpegBackend::open(nav_input *input, const char *filename, const nav_set
 
 const char *FFmpegBackend::getName() const noexcept
 {
-	return NAV_STRINGIZE(_NAV_FFMPEG_NAMESPACE);
+	return NAVIA_STRINGIZE(_NAVIA_FFMPEG_NAMESPACE);
 }
 
-nav_backendtype FFmpegBackend::getType() const noexcept
+navia_backendtype FFmpegBackend::getType() const noexcept
 {
-	return NAV_BACKENDTYPE_3RD_PARTY;
+	return NAVIA_BACKENDTYPE_3RD_PARTY;
 }
 
 const char *FFmpegBackend::getInfo()
@@ -1305,11 +1305,11 @@ const char *FFmpegBackend::getInfo()
 			const char *name;
 			unsigned int(*func)();
 		} verinfos[] = {
-			{"avutil", NAV_FFCALL(avutil_version)},
-			{"avcodec", NAV_FFCALL(avcodec_version)},
-			{"avformat", NAV_FFCALL(avformat_version)},
-			{"swscale", NAV_FFCALL(swscale_version)},
-			{"swresample", NAV_FFCALL(swresample_version)}
+			{"avutil", NAVIA_FFCALL(avutil_version)},
+			{"avcodec", NAVIA_FFCALL(avcodec_version)},
+			{"avformat", NAVIA_FFCALL(avformat_version)},
+			{"swscale", NAVIA_FFCALL(swscale_version)},
+			{"swresample", NAVIA_FFCALL(swresample_version)}
 		};
 
 		std::stringstream infobuf;
@@ -1332,7 +1332,7 @@ const char *FFmpegBackend::getInfo()
 
 Backend *create()
 {
-	if (checkBackendDisabled(_NAV_FFMPEG_DISABLEMENT) || checkBackendDisabled("FFMPEG"))
+	if (checkBackendDisabled(_NAVIA_FFMPEG_DISABLEMENT) || checkBackendDisabled("FFMPEG"))
 		return nullptr;
 
 	try
@@ -1341,11 +1341,11 @@ Backend *create()
 	}
 	catch (const std::exception &e)
 	{
-		nav::error::set(e);
+		navia::error::set(e);
 		return nullptr;
 	}
 }
 
 }
 
-#endif /* _NAV_FFMPEG_VERSION */
+#endif /* _NAVIA_FFMPEG_VERSION */

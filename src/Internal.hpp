@@ -1,41 +1,48 @@
-#ifndef _NAV_INTERNAL_HPP_
-#define _NAV_INTERNAL_HPP_
+#ifndef _NAVIA_INTERNAL_HPP_
+#define _NAVIA_INTERNAL_HPP_
 
-#ifndef _NAV_IMPLEMENTATION_
-#define _NAV_IMPLEMENTATION_
+#ifndef _NAVIA_IMPLEMENTATION_
+#define _NAVIA_IMPLEMENTATION_
 #endif
 
-#define NAV_STRINGIZE(x) _NAV_STRINGIZE0_(x)
-#define _NAV_STRINGIZE0_(x) #x
+#define NAVIA_STRINGIZE(x) _NAVIA_STRINGIZE0_(x)
+#define _NAVIA_STRINGIZE0_(x) #x
 
-#ifndef NAV_CAT
-#define NAV_CAT(x, y) x##y
+#ifndef NAVIA_CAT
+#define NAVIA_CAT(x, y) x##y
 #endif
 
 #include <cstdint>
 
-#include "nav/audioformat.h"
-#include "nav/types.h"
+#include "../include/navia/audioformat.h"
+#include "../include/navia/input.h"
+#include "../include/navia/types.h"
 
-#include "Backend.hpp"
-
-namespace nav
+namespace navia
 {
 
-typedef nav_t State;
-typedef nav_streaminfo_t StreamInfo;
-typedef nav_frame_t Frame;
+using State = ::navia_t;
+using StreamInfo = ::navia_streaminfo_t;
+using Frame = ::navia_frame_t;
 
-class Backend;
+class Backend
+{
+public:
+	virtual ~Backend();
+	virtual const char *getName() const noexcept = 0;
+	virtual navia_backendtype getType() const noexcept = 0;
+	virtual const char *getInfo() = 0;
+	virtual State *open(navia_input *input, const char *filename, const navia_settings *settings) = 0;
+};
 
 }
 
-struct nav_t
+struct navia_t
 {
-	virtual ~nav_t();
-	virtual nav::Backend *getBackend() const noexcept = 0;
+	virtual ~navia_t();
+	virtual navia::Backend *getBackend() const noexcept = 0;
 	virtual size_t getStreamCount() const noexcept = 0;
-	virtual const nav_streaminfo_t *getStreamInfo(size_t index) const noexcept = 0;
+	virtual const navia_streaminfo_t *getStreamInfo(size_t index) const noexcept = 0;
 	virtual bool isStreamEnabled(size_t index) const noexcept = 0;
 	virtual bool setStreamEnabled(size_t index, bool enabled) = 0;
 	virtual double getDuration() noexcept = 0;
@@ -43,20 +50,20 @@ struct nav_t
 	virtual double setPosition(double off) = 0;
 	virtual bool prepare() = 0;
 	virtual bool isPrepared() const noexcept = 0;
-	virtual nav_frame_t *read() = 0;
+	virtual navia::Frame *read() = 0;
 };
 
-struct nav_streaminfo_t
+struct navia_streaminfo_t
 {
 	struct AudioStreamInfo
 	{
 		uint32_t nchannels;
 		uint32_t sample_rate;
-		nav_audioformat format;
+		navia_audioformat format;
 
 		inline size_t size() const
 		{
-			return NAV_AUDIOFORMAT_BYTESIZE(format) * (size_t) nchannels;
+			return NAVIA_AUDIOFORMAT_BYTESIZE(format) * (size_t) nchannels;
 		}
 	};
 
@@ -64,7 +71,7 @@ struct nav_streaminfo_t
 	{
 		double fps;
 		uint32_t width, height;
-		nav_pixelformat format;
+		navia_pixelformat format;
 
 		inline size_t size() const
 		{
@@ -72,14 +79,14 @@ struct nav_streaminfo_t
 
 			switch (format)
 			{
-				case NAV_PIXELFORMAT_UNKNOWN:
+				case NAVIA_PIXELFORMAT_UNKNOWN:
 				default:
 					return 0;
-				case NAV_PIXELFORMAT_RGB8:
-				case NAV_PIXELFORMAT_YUV444:
+				case NAVIA_PIXELFORMAT_RGB8:
+				case NAVIA_PIXELFORMAT_YUV444:
 					return 3 * dimensions;
-				case NAV_PIXELFORMAT_YUV420:
-				case NAV_PIXELFORMAT_NV12:
+				case NAVIA_PIXELFORMAT_YUV420:
+				case NAVIA_PIXELFORMAT_NV12:
 					return dimensions + 2 * ((width + 1) / 2) * ((height + 1) / 2);
 			}
 		}
@@ -89,13 +96,13 @@ struct nav_streaminfo_t
 		{
 			switch (format)
 			{
-				case NAV_PIXELFORMAT_UNKNOWN:
-				case NAV_PIXELFORMAT_YUV420:
-				case NAV_PIXELFORMAT_YUV444:
-				case NAV_PIXELFORMAT_NV12:
+				case NAVIA_PIXELFORMAT_UNKNOWN:
+				case NAVIA_PIXELFORMAT_YUV420:
+				case NAVIA_PIXELFORMAT_YUV444:
+				case NAVIA_PIXELFORMAT_NV12:
 				default:
 					return width;
-				case NAV_PIXELFORMAT_RGB8:
+				case NAVIA_PIXELFORMAT_RGB8:
 					return ((size_t) width) * 3;
 			}
 		}
@@ -105,17 +112,17 @@ struct nav_streaminfo_t
 	{
 		switch (type)
 		{
-			case NAV_STREAMTYPE_UNKNOWN:
+			case NAVIA_STREAMTYPE_UNKNOWN:
 			default:
 				return 0;
-			case NAV_STREAMTYPE_VIDEO:
+			case NAVIA_STREAMTYPE_VIDEO:
 			{
 				switch (video.format)
 				{
-					case NAV_PIXELFORMAT_UNKNOWN:
+					case NAVIA_PIXELFORMAT_UNKNOWN:
 					default:
 						return 0;
-					case NAV_PIXELFORMAT_YUV420:
+					case NAVIA_PIXELFORMAT_YUV420:
 					{
 						switch (index)
 						{
@@ -130,9 +137,9 @@ struct nav_streaminfo_t
 
 						return 0;
 					}
-					case NAV_PIXELFORMAT_YUV444:
+					case NAVIA_PIXELFORMAT_YUV444:
 						return (index >= 0 && index < 3) * (size_t) video.width;
-					case NAV_PIXELFORMAT_NV12:
+					case NAVIA_PIXELFORMAT_NV12:
 						switch (index)
 						{
 							case 0:
@@ -144,13 +151,13 @@ struct nav_streaminfo_t
 						}
 
 						return 0;
-					case NAV_PIXELFORMAT_RGB8:
+					case NAVIA_PIXELFORMAT_RGB8:
 						return video.width * (size_t) 3;
 				}
 
 				return 0;
 			}
-			case NAV_STREAMTYPE_AUDIO:
+			case NAVIA_STREAMTYPE_AUDIO:
 				return (index == 0) * audio.size();
 		}
 
@@ -161,17 +168,17 @@ struct nav_streaminfo_t
 	{
 		switch (type)
 		{
-			case NAV_STREAMTYPE_UNKNOWN:
+			case NAVIA_STREAMTYPE_UNKNOWN:
 			default:
 				return 0;
-			case NAV_STREAMTYPE_VIDEO:
+			case NAVIA_STREAMTYPE_VIDEO:
 			{
 				switch (video.format)
 				{
-					case NAV_PIXELFORMAT_UNKNOWN:
+					case NAVIA_PIXELFORMAT_UNKNOWN:
 					default:
 						return 0;
-					case NAV_PIXELFORMAT_YUV420:
+					case NAVIA_PIXELFORMAT_YUV420:
 					{
 						switch (index)
 						{
@@ -186,9 +193,9 @@ struct nav_streaminfo_t
 
 						return 0;
 					}
-					case NAV_PIXELFORMAT_YUV444:
+					case NAVIA_PIXELFORMAT_YUV444:
 						return (index >= 0 && index < 3) * (size_t) video.height;
-					case NAV_PIXELFORMAT_NV12:
+					case NAVIA_PIXELFORMAT_NV12:
 						switch (index)
 						{
 							case 0:
@@ -200,20 +207,20 @@ struct nav_streaminfo_t
 						}
 
 						return 0;
-					case NAV_PIXELFORMAT_RGB8:
+					case NAVIA_PIXELFORMAT_RGB8:
 						return video.height;
 				}
 
 				return 0;
 			}
-			case NAV_STREAMTYPE_AUDIO:
+			case NAVIA_STREAMTYPE_AUDIO:
 				return (size_t) (index == 0);
 		}
 
 		return 0;
 	}
 
-	nav_streamtype type;
+	navia_streamtype type;
 	union
 	{
 		AudioStreamInfo audio;
@@ -221,21 +228,21 @@ struct nav_streaminfo_t
 	};
 };
 
-struct nav_frame_t
+struct navia_frame_t
 {
-	virtual ~nav_frame_t();
+	virtual ~navia_frame_t();
 	virtual size_t getStreamIndex() const noexcept = 0;
-	virtual const nav_streaminfo_t *getStreamInfo() const noexcept = 0;
+	virtual const navia_streaminfo_t *getStreamInfo() const noexcept = 0;
 	virtual double tell() const noexcept = 0;
 	virtual const uint8_t *const *acquire(ptrdiff_t **strides, size_t *nplanes) = 0;
 	virtual void release() noexcept = 0;
-	virtual nav_hwacceltype getHWAccelType() const noexcept = 0;
+	virtual navia_hwacceltype getHWAccelType() const noexcept = 0;
 	virtual void *getHWAccelHandle() = 0;
 
-	inline bool operator<(const nav_frame_t &other) const noexcept
+	inline bool operator<(const navia_frame_t &other) const noexcept
 	{
 		return tell() < other.tell();
 	}
 };
 
-#endif /* _NAV_INTERNAL_HPP_ */
+#endif /* _NAVIA_INTERNAL_HPP_ */

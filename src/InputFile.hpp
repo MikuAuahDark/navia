@@ -1,15 +1,15 @@
-#ifndef _NAV_INPUT_FILE_HPP_
-#define _NAV_INPUT_FILE_HPP_
+#ifndef _NAVIA_INPUT_FILE_HPP_
+#define _NAVIA_INPUT_FILE_HPP_
 
 #include <string>
 
-#include "nav/input.h"
+#include "../include/navia/input.h"
 
-namespace nav::input::file
+namespace navia::input::file
 {
 
-bool populate(nav_input *input, const std::string &filename);
+bool populate(navia_input *input, const std::string &filename);
 
 }
 
-#endif /* _NAV_INPUT_FILE_HPP_ */
+#endif /* _NAVIA_INPUT_FILE_HPP_ */

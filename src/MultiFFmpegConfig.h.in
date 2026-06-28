@@ -1,0 +1,5 @@
+#cmakedefine NAVIA_BACKEND_FFMPEG_4
+#cmakedefine NAVIA_BACKEND_FFMPEG_5
+#cmakedefine NAVIA_BACKEND_FFMPEG_6
+#cmakedefine NAVIA_BACKEND_FFMPEG_7
+#cmakedefine NAVIA_BACKEND_FFMPEG_8

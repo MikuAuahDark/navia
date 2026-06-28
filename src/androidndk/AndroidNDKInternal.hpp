@@ -1,19 +1,18 @@
-#ifndef _NAV_BACKEND_ANDROIDNDK_INTERNAL_HPP_
-#define _NAV_BACKEND_ANDROIDNDK_INTERNAL_HPP_
+#ifndef _NAVIA_BACKEND_ANDROIDNDK_INTERNAL_HPP_
+#define _NAVIA_BACKEND_ANDROIDNDK_INTERNAL_HPP_
 
 #include "AndroidNDKBackend.hpp"
 
-#ifdef NAV_BACKEND_ANDROIDNDK
+#ifdef NAVIA_BACKEND_ANDROIDNDK
 
 #include <memory>
 #include <vector>
 
 #include <media/NdkMediaExtractor.h>
 
-#include "Backend.hpp"
-#include "DynLib.hpp"
+#include "../DynLib.hpp"
 
-namespace nav::androidndk
+namespace navia::androidndk
 {
 
 using UniqueMediaExtractor = std::unique_ptr<AMediaExtractor, decltype(&AMediaExtractor_delete)>;
@@ -26,7 +25,7 @@ class MediaSourceWrapper
 {
 public:
 	MediaSourceWrapper(const MediaSourceWrapper &other) = delete;
-	MediaSourceWrapper(AndroidNDKBackend *backend, nav_input *input);
+	MediaSourceWrapper(AndroidNDKBackend *backend, navia_input *input);
 	MediaSourceWrapper(MediaSourceWrapper &&other);
 	~MediaSourceWrapper();
 	AMediaDataSource *get() const noexcept;
@@ -39,7 +38,7 @@ private:
 
 	AndroidNDKBackend *f;
 	AMediaDataSource *datasource;
-	nav_input *input;
+	navia_input *input;
 };
 
 class AndroidNDKState: public State
@@ -49,7 +48,7 @@ public:
 	~AndroidNDKState() override;
 	Backend *getBackend() const noexcept override;
 	size_t getStreamCount() const noexcept override;
-	const nav_streaminfo_t *getStreamInfo(size_t index) const noexcept override;
+	const navia_streaminfo_t *getStreamInfo(size_t index) const noexcept override;
 	bool isStreamEnabled(size_t index) const noexcept override;
 	bool setStreamEnabled(size_t index, bool enabled) override;
 	double getDuration() noexcept override;
@@ -57,7 +56,7 @@ public:
 	double setPosition(double off) override;
 	bool prepare() override;
 	bool isPrepared() const noexcept override;
-	nav_frame_t *read() override;
+	navia_frame_t *read() override;
 
 private:
 	AndroidNDKBackend *f;
@@ -66,7 +65,7 @@ private:
 	bool needAdvance, prepared;
 
 	std::vector<bool> activeStream, hasEOS;
-	std::vector<nav_streaminfo_t> streamInfo;
+	std::vector<navia_streaminfo_t> streamInfo;
 	std::vector<UniqueMediaCodec> decoders;
 
 	UniqueMediaExtractor extractor;
@@ -79,22 +78,22 @@ public:
 	AndroidNDKBackend();
 	~AndroidNDKBackend() override;
 	const char *getName() const noexcept override;
-	nav_backendtype getType() const noexcept override;
+	navia_backendtype getType() const noexcept override;
 	const char *getInfo() override;
-	State *open(nav_input *input, const char *filename, const nav_settings *settings) override;
+	State *open(navia_input *input, const char *filename, const navia_settings *settings) override;
 
 private:
 	friend class MediaSourceWrapper;
 	friend class AndroidNDKState;
 	DynLib mediandk;
 
-#define _NAV_PROXY_FUNCTION_POINTER(n) decltype(n) *ptr_##n;
+#define _NAVIA_PROXY_FUNCTION_POINTER(n) decltype(n) *ptr_##n;
 #include "AndroidNDKPointers.h"
-#undef _NAV_PROXY_FUNCTION_POINTER
+#undef _NAVIA_PROXY_FUNCTION_POINTER
 };
 
 }
 
-#endif /* NAV_BACKEND_ANDROIDNDK */
+#endif /* NAVIA_BACKEND_ANDROIDNDK */
 
-#endif /* _NAV_BACKEND_ANDROIDNDK_INTERNAL_HPP_ */
+#endif /* _NAVIA_BACKEND_ANDROIDNDK_INTERNAL_HPP_ */
