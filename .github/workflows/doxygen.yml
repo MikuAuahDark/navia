@@ -16,7 +16,7 @@ jobs:
     - name: Checkout Main Repository
       uses: actions/checkout@v4
       with:
-        path: nav
+        path: navia
         fetch-depth: 2
     - name: Checkout gh-pages
       uses: actions/checkout@v4
@@ -26,13 +26,13 @@ jobs:
     - name: Generate Documentation
       uses: mattnotmitt/doxygen-action@1.9.8
       with:
-        working-directory: nav
+        working-directory: navia
     - name: Cleanup Branch
       if: github.event_name == 'push'
       run:
         rm -rf docs/${{ github.ref_name }}
     - name: Move Generated Docs
-      run: sudo mv nav/docs/html docs/${{ github.ref_name }}
+      run: sudo mv navia/docs/html docs/${{ github.ref_name }}
     - name: Add and Commit
       uses: EndBug/add-and-commit@v9
       with:

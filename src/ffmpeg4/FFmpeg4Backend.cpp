@@ -1,8 +1,8 @@
-#include "NAVConfig.hpp"
+#include "../Config.hpp"
 
-#ifdef NAV_BACKEND_FFMPEG_4
+#ifdef NAVIA_BACKEND_FFMPEG_4
 
 #include "FFmpeg4Backend.hpp"
-#include "ffmpeg_common/FFmpegBackend.cpp"
+#include "../ffmpeg_common/FFmpegBackend.cpp"
 
-#endif /* NAV_BACKEND_FFMPEG_4 */
+#endif /* NAVIA_BACKEND_FFMPEG_4 */

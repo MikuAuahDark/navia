@@ -1,5 +1,5 @@
-#ifndef _NAV_BACKEND_MEDIAFOUNDATION_INTERNAL_
-#define _NAV_BACKEND_MEDIAFOUNDATION_INTERNAL_
+#ifndef _NAVIA_BACKEND_MEDIAFOUNDATION_INTERNAL_
+#define _NAVIA_BACKEND_MEDIAFOUNDATION_INTERNAL_
 
 #include <string>
 #include <type_traits>
@@ -11,12 +11,11 @@
 #include <mfreadwrite.h>
 #include <d3d11.h>
 
-#include "Internal.hpp"
-#include "nav/input.h"
-#include "Backend.hpp"
-#include "DynLib.hpp"
+#include "../Internal.hpp"
+#include "../Common.hpp"
+#include "../DynLib.hpp"
 
-namespace nav::mediafoundation
+namespace navia::mediafoundation
 {
 
 class MediaFoundationState;
@@ -45,7 +44,7 @@ public:
 			ptr->AddRef();
 	}
 
-	ComPtr(ComPtr<T> &&other)
+	ComPtr(ComPtr<T> &&other) noexcept
 	: ptr(other.ptr)
 	{
 		other.ptr = nullptr;
@@ -57,7 +56,7 @@ public:
 			ptr->Release();
 	}
 
-	ComPtr &operator=(const ComPtr<T> &other)
+	ComPtr &operator=(const ComPtr<T> &other) noexcept
 	{
 		if (other.ptr)
 			other.ptr->AddRef();
@@ -69,7 +68,7 @@ public:
 		return *this;
 	}
 
-	ComPtr &operator=(ComPtr<T> &&other)
+	ComPtr &operator=(ComPtr<T> &&other) noexcept
 	{
 		ptr = other.ptr;
 		other.ptr = nullptr;
@@ -125,17 +124,17 @@ public:
 
 	explicit operator bool()
 	{
-		return ptr;
+		return ptr != nullptr;
 	}
 private:
 	template<typename> friend class ComPtr;
 	T *ptr;
 };
 
-class NavInputStream: public IStream
+class NaviaInputStream: public IStream
 {
 public:
-	NavInputStream(nav_input *input, const char *filename);
+	NaviaInputStream(navia_input *input, const char *filename);
 
 	/* IUnknown */
 	ULONG STDMETHODCALLTYPE AddRef() override;
@@ -158,7 +157,7 @@ public:
     HRESULT STDMETHODCALLTYPE UnlockRegion(ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType) override;
 private:
 	std::string filename;
-	nav_input *input;
+	navia_input *input;
 	ULONG refc;
 };
 
@@ -173,13 +172,13 @@ struct HWAccelState
 class MediaFoundationFrame: public Frame
 {
 public:
-	MediaFoundationFrame(nav_streaminfo_t *sinfo, ComPtr<IMFMediaBuffer> &buffer, double pts, size_t si);
+	MediaFoundationFrame(navia_streaminfo_t *sinfo, ComPtr<IMFMediaBuffer> &buffer, double pts, size_t si);
 	size_t getStreamIndex() const noexcept override;
-	const nav_streaminfo_t *getStreamInfo() const noexcept override;
+	const navia_streaminfo_t *getStreamInfo() const noexcept override;
 	double tell() const noexcept override;
 	const uint8_t *const *acquire(ptrdiff_t **strides, size_t *nplanes) override;
 	void release() noexcept override;
-	nav_hwacceltype getHWAccelType() const noexcept override;
+	navia_hwacceltype getHWAccelType() const noexcept override;
 	void *getHWAccelHandle() override;
 
 private:
@@ -190,7 +189,7 @@ private:
 	ComPtr<IMFMediaBuffer> mediaBuffer;
 	ComPtr<IMF2DBuffer> buffer2D;
 	double pts;
-	nav_streaminfo_t *streamInfo;
+	navia_streaminfo_t *streamInfo;
 	size_t index;
 	bool ishwaccelerated;
 };
@@ -200,17 +199,17 @@ class MediaFoundationState: public State
 public:
 	MediaFoundationState(
 		MediaFoundationBackend *backend,
-		nav_input *input,
-		ComPtr<NavInputStream> &is,
+		navia_input *input,
+		ComPtr<NaviaInputStream> &is,
 		ComPtr<IMFByteStream> &mfbs,
 		ComPtr<IMFSourceReader> &mfsr,
 		HWAccelState *hwaccelState
 	);
 	~MediaFoundationState() override;
 	
-	nav::Backend *getBackend() const noexcept override;
+	navia::Backend *getBackend() const noexcept override;
 	size_t getStreamCount() const noexcept override;
-	const nav_streaminfo_t *getStreamInfo(size_t index) const noexcept override;
+	const navia_streaminfo_t *getStreamInfo(size_t index) const noexcept override;
 	bool isStreamEnabled(size_t index) const noexcept override;
 	bool setStreamEnabled(size_t index, bool enabled) override;
 	double getDuration() noexcept override;
@@ -218,20 +217,20 @@ public:
 	double setPosition(double position) override;
 	bool prepare() override;
 	bool isPrepared() const noexcept override;
-	nav_frame_t *read() override;
+	navia_frame_t *read() override;
 
 private:
-	nav_frame_t *decode(ComPtr<IMFSample> &mfSample, size_t streamIndex, LONGLONG timestamp);
+	navia_frame_t *decode(ComPtr<IMFSample> &mfSample, size_t streamIndex, LONGLONG timestamp);
 
 	MediaFoundationBackend *backend;
 
-	nav_input *originalInput;
-	ComPtr<NavInputStream> inputStream;
+	navia_input *originalInput;
+	ComPtr<NaviaInputStream> inputStream;
 	ComPtr<IMFByteStream> mfByteStream;
 	ComPtr<IMFSourceReader> mfSourceReader;
 	HWAccelState hwaccel;
 
-	std::vector<nav::StreamInfo> streamInfoList;
+	std::vector<navia::StreamInfo> streamInfoList;
 	UINT64 currentPosition; // in 100-nanosecond
 	bool prepared;
 };
@@ -242,9 +241,9 @@ class MediaFoundationBackend: public Backend
 public:
 	~MediaFoundationBackend() override;
 	const char *getName() const noexcept override;
-	nav_backendtype getType() const noexcept override;
+	navia_backendtype getType() const noexcept override;
 	const char *getInfo() override;
-	State *open(nav_input *input, const char *filename, const nav_settings *settings) override;
+	State *open(navia_input *input, const char *filename, const navia_settings *settings) override;
 
 private:
 	friend Backend *create();
@@ -254,11 +253,11 @@ private:
 	bool callCoUninitialize;
 
 public:
-#define _NAV_PROXY_FUNCTION_POINTER(lib, n) decltype(n) *func_##n;
+#define _NAVIA_PROXY_FUNCTION_POINTER(lib, n) decltype(n) *func_##n;
 #include "MediaFoundationPointers.h"
-#undef _NAV_PROXY_FUNCTION_POINTER
+#undef _NAVIA_PROXY_FUNCTION_POINTER
 };
 
 }
 
-#endif /* _NAV_BACKEND_MEDIAFOUNDATION_INTERNAL_ */
+#endif /* _NAVIA_BACKEND_MEDIAFOUNDATION_INTERNAL_ */

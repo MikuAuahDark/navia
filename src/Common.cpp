@@ -9,10 +9,10 @@
 #include "Common.hpp"
 #include "Error.hpp"
 
-namespace nav
+namespace navia
 {
 
-FrameVector::FrameVector(nav_streaminfo_t *streaminfo, size_t streamindex, double position, const void *data, size_t size)
+FrameVector::FrameVector(navia_streaminfo_t *streaminfo, size_t streamindex, double position, const void *data, size_t size)
 : buffer(size)
 , data(planeCount(streaminfo->video.format), nullptr)
 , planeWidths(planeCount(streaminfo->video.format), 0)
@@ -26,7 +26,7 @@ FrameVector::FrameVector(nav_streaminfo_t *streaminfo, size_t streamindex, doubl
 	// Partition data, assume no padding
 	uint8_t *start = buffer.data();
 
-	if (streaminfo->type == NAV_STREAMTYPE_VIDEO)
+	if (streaminfo->type == NAVIA_STREAMTYPE_VIDEO)
 	{
 		for (size_t i = 0; i < planeCount(streaminfo->video.format); i++)
 		{
@@ -50,7 +50,7 @@ size_t FrameVector::getStreamIndex() const noexcept
 	return streamindex;
 }
 
-nav_streaminfo_t *FrameVector::getStreamInfo() const noexcept
+navia_streaminfo_t *FrameVector::getStreamInfo() const noexcept
 {
 	return streaminfo;
 }
@@ -85,14 +85,14 @@ uint8_t *FrameVector::pointer() noexcept
 	return buffer.data();
 }
 
-nav_hwacceltype FrameVector::getHWAccelType() const noexcept
+navia_hwacceltype FrameVector::getHWAccelType() const noexcept
 {
-	return NAV_HWACCELTYPE_NONE;
+	return NAVIA_HWACCELTYPE_NONE;
 }
 
 void *FrameVector::getHWAccelHandle()
 {
-	nav::error::set("Not hardware accelerated");
+	navia::error::set("Not hardware accelerated");
 	return nullptr;
 }
 
@@ -128,22 +128,22 @@ std::optional<int> getEnvvarInt(const std::string &name)
 
 bool checkBackendDisabled(const std::string &backendNameUppercase)
 {
-	return getEnvvarBool("NAV_DISABLE_" + backendNameUppercase);
+	return getEnvvarBool("NAVIA_DISABLE_" + backendNameUppercase);
 }
 
-size_t planeCount(nav_pixelformat fmt) noexcept
+size_t planeCount(navia_pixelformat fmt) noexcept
 {
 	switch (fmt)
 	{
-		case NAV_PIXELFORMAT_UNKNOWN:
+		case NAVIA_PIXELFORMAT_UNKNOWN:
 		default:
 			return 0;
-		case NAV_PIXELFORMAT_RGB8:
+		case NAVIA_PIXELFORMAT_RGB8:
 			return 1;
-		case NAV_PIXELFORMAT_NV12:
+		case NAVIA_PIXELFORMAT_NV12:
 			return 2;
-		case NAV_PIXELFORMAT_YUV420:
-		case NAV_PIXELFORMAT_YUV444:
+		case NAVIA_PIXELFORMAT_YUV420:
+		case NAVIA_PIXELFORMAT_YUV444:
 			return 3;
 	}
 }

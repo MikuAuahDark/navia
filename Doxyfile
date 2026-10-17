@@ -4,9 +4,9 @@
 # Project related configuration options
 #---------------------------------------------------------------------------
 DOXYFILE_ENCODING      = UTF-8
-PROJECT_NAME           = "NAV"
+PROJECT_NAME           = "Navia"
 PROJECT_NUMBER         = 0.0
-PROJECT_BRIEF          = "NPad Audio Video Decoder"
+PROJECT_BRIEF          = "NPad Audio Video Interface API"
 PROJECT_LOGO           =
 PROJECT_ICON           =
 OUTPUT_DIRECTORY       = docs

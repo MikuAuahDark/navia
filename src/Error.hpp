@@ -1,10 +1,10 @@
-#ifndef _NAV_ERROR_HPP_
-#define _NAV_ERROR_HPP_
+#ifndef _NAVIA_ERROR_HPP_
+#define _NAVIA_ERROR_HPP_
 
 #include <exception>
 #include <string>
 
-namespace nav::error
+namespace navia::error
 {
 
 const char *get();
@@ -16,4 +16,4 @@ inline void set(const std::exception &e)
 
 }
 
-#endif /* _NAV_ERROR_HPP_ */
+#endif /* _NAVIA_ERROR_HPP_ */

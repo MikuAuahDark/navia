@@ -11,19 +11,19 @@
 #include "Common.hpp"
 #include "Error.hpp"
 
-namespace nav::input::file
+namespace navia::input::file
 {
 
-static int(*nav_fseeko64)(FILE *f, int64_t off, int origin) = nullptr;
-static int64_t(*nav_ftello64)(FILE *f) = nullptr;
+static int(*navia_fseeko64)(FILE *f, int64_t off, int origin) = nullptr;
+static int64_t(*navia_ftello64)(FILE *f) = nullptr;
 static bool hasInitLFS = false;
 
 static void initLFS()
 {
 	if (!hasInitLFS)
 	{
-		nav_fseeko64 = (decltype(nav_fseeko64)) dlsym(RTLD_DEFAULT, "fseeko64");
-		nav_ftello64 = (decltype(nav_ftello64)) dlsym(RTLD_DEFAULT, "ftello64");
+		navia_fseeko64 = (decltype(navia_fseeko64)) dlsym(RTLD_DEFAULT, "fseeko64");
+		navia_ftello64 = (decltype(navia_ftello64)) dlsym(RTLD_DEFAULT, "ftello64");
 		hasInitLFS = true;
 	}
 }
@@ -39,8 +39,8 @@ inline int seekimpl(FILE *f, int64_t pos, int origin)
 {
 	initLFS();
 
-	if (nav_fseeko64)
-		return nav_fseeko64(f, pos, origin);
+	if (navia_fseeko64)
+		return navia_fseeko64(f, pos, origin);
 	else
 		return fseek(f, (long) pos, origin);
 }
@@ -49,8 +49,8 @@ inline uint64_t tellimpl(FILE *f)
 {
 	initLFS();
 
-	if (nav_ftello64)
-		return (uint64_t) nav_ftello64(f);
+	if (navia_ftello64)
+		return (uint64_t) navia_ftello64(f);
 	else
 		return (uint64_t) ftell(f);
 }
@@ -60,7 +60,7 @@ static size_t readfile(void *userdata, void *dest, size_t size)
 	return fread(dest, 1, size, (FILE*) userdata);
 }
 
-static nav_bool seekfile(void *userdata, uint64_t pos)
+static navia_bool seekfile(void *userdata, uint64_t pos)
 {
 	return seekimpl((FILE*) userdata, (int64_t) pos, SEEK_SET) == 0;
 }
@@ -82,18 +82,18 @@ static uint64_t sizefile(void *userdata)
 	return size;
 }
 
-bool populate(nav_input *input, const std::string &filename)
+bool populate(navia_input *input, const std::string &filename)
 {
 	initLFS();
 	FILE *f = fopen(filename.c_str(), "rb");
 
 	if (!f)
 	{
-		nav::error::set("Cannot open file");
+		navia::error::set("Cannot open file");
 		return false;
 	}
 
-	nav::error::set("");
+	navia::error::set("");
 	input->userdata = f;
 	input->close = closefile;
 	input->read = readfile;

@@ -9,7 +9,7 @@
 
 #include "DynLib.hpp"
 
-namespace nav
+namespace navia
 {
 
 DynLib::DynLib()
@@ -28,13 +28,13 @@ DynLib::DynLib(const std::string &name)
 		throw std::runtime_error("cannot load " + name);
 }
 
-DynLib::DynLib(DynLib&& other)
+DynLib::DynLib(DynLib&& other) noexcept
 : mod(other.mod)
 {
 	other.mod = nullptr;
 }
 
-DynLib &DynLib::operator=(DynLib&& other)
+DynLib &DynLib::operator=(DynLib&& other) noexcept
 {
 	close();
 	mod = other.mod;
@@ -53,7 +53,7 @@ void *DynLib::_get(const std::string &name, bool &success)
 
 #ifdef _WIN32
 	SetLastError(0);
-	result = GetProcAddress((HMODULE) mod, name.c_str());
+	result = (void*) GetProcAddress((HMODULE) mod, name.c_str());
 	success = GetLastError() == 0;
 #else
 	dlerror();
@@ -61,6 +61,8 @@ void *DynLib::_get(const std::string &name, bool &success)
 	success = dlerror() == nullptr;
 #endif
 
+	// Note: We don't check if `result != nullptr` because it doesn't
+	// necessarily signify failure (e.g. the value is actually 0).
 	return result;
 }
 

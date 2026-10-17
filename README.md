@@ -1,16 +1,16 @@
-NAV
+Navia
 =====
 
-NPad Audio Video decoding library.
+NPad Audio Video Interface API.
 
 Performs audio and video decoding using platform-specific backends.
 
 Backends
 -----
 
-NAV relies on various backends to perform audio and video decoding.
+Navia relies on various backends to perform audio and video decoding.
 
-| Backend           | Kind      | OS Availability         | `nav_backend_name()` | Disablement Env. Var\* | Additional Notes                                         |
+| Backend           | Kind      | OS Availability         | `navia_backend_name()` | Disablement Env. Var\* | Additional Notes                                         |
 |-------------------|-----------|-------------------------|----------------------|------------------------|----------------------------------------------------------|
 | [NdkMedia]        | OS API    | Android                 | `"android"`          | `ANDROIDNDK`           | Due to API limitations, Android 9 is required.           |
 | [FFmpeg] 4        | 3rd-Party | Windows, Linux, Android | `"ffmpeg4"`          | `FFMPEG4`              | Requires the appropriate header files to be present.\*\* |
@@ -21,7 +21,7 @@ NAV relies on various backends to perform audio and video decoding.
 | [GStreamer]       | 3rd-Party | Linux                   | `"gstreamer"`        | `GSTREAMER`            | Requires the appropriate header files to be present.     |
 | [MediaFoundation] | OS API    | Windows                 | `"mediafoundation"`  | `MEDIAFOUNDATION`      | UWP target is not supported.                             |
 
-\*: Prepend `NAV_DISABLE_` to the environment variable name. It is shortened due to readability reasons.
+\*: Prepend `NAVIA_DISABLE_` to the environment variable name. It is shortened due to readability reasons.
 
 \*\*: By default, only one FFmpeg version is picked based on what's the compiler can find. To compile with support for multiple FFmpeg versions, see below.
 
@@ -33,8 +33,6 @@ NAV relies on various backends to perform audio and video decoding.
 Multiple FFmpeg Version Support
 -----
 
-NAV since 0.3.0 can be compiled to support multiple FFmpeg versions.
-
 To compile with multiple FFmpeg versions, pass `-DFFMPEGn_DIR` (where `n` is between 4 to 8, both inclusive) in CMake
 command-line to location where FFmpeg header files are placed. Note that the directory should be one directory above
 the `include`. For example, if you have FFmpeg 7 includes in `/path/to/ffmpeg7/include`, then do
@@ -45,7 +43,7 @@ Example command-line for CMake:
 cmake -Bbuild -S. --install-prefix $PWD/installdir -DFFMPEG6_DIR=/path/to/ffmpeg6 -DFFMPEG7_DIR=/path/to/ffmpeg7
 ```
 
-For best compatibility, it's recommended to use FFmpeg n.0 header files. Note that NAV only needs functional header
+For best compatibility, it's recommended to use FFmpeg n.0 header files. Note that Navia only needs functional header
 files to compile as library files will be loaded at runtime.
 
 Examples

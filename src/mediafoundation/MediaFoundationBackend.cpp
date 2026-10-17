@@ -1,14 +1,11 @@
 #include "MediaFoundationBackend.hpp"
 
-#ifdef NAV_BACKEND_MEDIAFOUNDATION
+#ifdef NAVIA_BACKEND_MEDIAFOUNDATION
 
-#include <iomanip>
 #include <map>
-#include <memory>
 #include <new>
 #include <sstream>
 #include <stdexcept>
-#include <type_traits>
 #include <vector>
 
 #include <initguid.h>
@@ -16,8 +13,8 @@
 #include <mferror.h>
 #include <d3d11_4.h>
 
-#include "Common.hpp"
-#include "Error.hpp"
+#include "../Common.hpp"
+#include "../Error.hpp"
 #include "MediaFoundationInternal.hpp"
 
 /* Notes on MF backend:
@@ -29,13 +26,13 @@ namespace
 
 // Don't use GUID_NULL, it needs linking to uuid.lib which is no-no.
 constexpr GUID NULL_GUID = {0, 0, 0, {0, 0, 0, 0, 0, 0, 0, 0}};
-constexpr GUID IMFAttributes_GUID = {0x2cd2d921, 0xc447, 0x44a7, {0xa1, 0x3c, 0x4a, 0xda, 0xbf, 0xc2, 0x47, 0xe3}};
-constexpr GUID IMFTransform_GUID = {0xbf94c121, 0x5b05, 0x4e6f, {0x80, 0x00, 0xba, 0x59, 0x89, 0x61, 0x41, 0x4d}};
-constexpr GUID IMF2DBuffer_GUID = {0x7DC9D5F9, 0x9ED9, 0x44ec, {0x9B, 0xBF, 0x06, 0x00, 0xBB, 0x58, 0x9F, 0xBB}};
-constexpr GUID IMF2DBuffer2_GUID = {0x33ae5ea6, 0x4316, 0x436f, {0x8d, 0xdd, 0xd7, 0x3d, 0x22, 0xf8, 0x29, 0xec}};
-constexpr GUID IMFDXGIBuffer_GUID = {0xe7174cfa, 0x1c9e, 0x48b1, {0x88, 0x66, 0x62, 0x62, 0x26, 0xbf, 0xc2, 0x58}};
-constexpr GUID ID3D11Multithread_GUID = {0x9B7E4E00, 0x342C, 0x4106, {0xA1, 0x9F, 0x4F, 0x27, 0x04, 0xF6, 0x89, 0xF0}};
-constexpr GUID ID3D11Texture2D_GUID = {0x6f15aaf2, 0xd208, 0x4e89, {0x9a, 0xb4, 0x48, 0x95, 0x35, 0xd3, 0x4f, 0x9c}};
+constexpr GUID IMFAttributes_GUID = {0x2cd2d921, 0xc447, 0x44a7, {0xa1, 0x3c, 0x4a, 0xda, 0xbf, 0xc2, 0x47, 0xe3}}; // NOLINT
+constexpr GUID IMFTransform_GUID = {0xbf94c121, 0x5b05, 0x4e6f, {0x80, 0x00, 0xba, 0x59, 0x89, 0x61, 0x41, 0x4d}}; // NOLINT
+constexpr GUID IMF2DBuffer_GUID = {0x7DC9D5F9, 0x9ED9, 0x44ec, {0x9B, 0xBF, 0x06, 0x00, 0xBB, 0x58, 0x9F, 0xBB}}; // NOLINT
+constexpr GUID IMF2DBuffer2_GUID = {0x33ae5ea6, 0x4316, 0x436f, {0x8d, 0xdd, 0xd7, 0x3d, 0x22, 0xf8, 0x29, 0xec}}; // NOLINT
+constexpr GUID IMFDXGIBuffer_GUID = {0xe7174cfa, 0x1c9e, 0x48b1, {0x88, 0x66, 0x62, 0x62, 0x26, 0xbf, 0xc2, 0x58}}; // NOLINT
+constexpr GUID ID3D11Multithread_GUID = {0x9B7E4E00, 0x342C, 0x4106, {0xA1, 0x9F, 0x4F, 0x27, 0x04, 0xF6, 0x89, 0xF0}}; // NOLINT
+constexpr GUID ID3D11Texture2D_GUID = {0x6f15aaf2, 0xd208, 0x4e89, {0x9a, 0xb4, 0x48, 0x95, 0x35, 0xd3, 0x4f, 0x9c}}; // NOLINT
 
 constexpr LONGLONG MF_100NS_UNIT = 10000000;
 
@@ -51,8 +48,8 @@ struct GUIDLessThan
 		if (guid1.Data3 != guid2.Data3)
 			return guid1.Data3 < guid2.Data3;
 
-		for (int i = 0; i < 8; i++) {
-			if (guid1.Data4[i]!=guid2.Data4[i])
+		for (int i = 0; i < sizeof(GUID::Data4); i++) {
+			if (guid1.Data4[i] != guid2.Data4[i])
 				return guid1.Data4[i] < guid2.Data4[i];
 		}
 
@@ -60,20 +57,20 @@ struct GUIDLessThan
 	}
 };
 
-static std::map<GUID, nav_pixelformat, GUIDLessThan> mediaTypeCombination[2] = {
+static std::map<GUID, navia_pixelformat, GUIDLessThan> mediaTypeCombination[2] = {
 	{
 		// Not hardware accelerated
-		{MFVideoFormat_IYUV, NAV_PIXELFORMAT_YUV420},
-		{MFVideoFormat_I420, NAV_PIXELFORMAT_YUV420},
-		{MFVideoFormat_NV12, NAV_PIXELFORMAT_NV12},
-		{MFVideoFormat_RGB24, NAV_PIXELFORMAT_RGB8}
+		{MFVideoFormat_IYUV, NAVIA_PIXELFORMAT_YUV420},
+		{MFVideoFormat_I420, NAVIA_PIXELFORMAT_YUV420},
+		{MFVideoFormat_NV12, NAVIA_PIXELFORMAT_NV12},
+		{MFVideoFormat_RGB24, NAVIA_PIXELFORMAT_RGB8}
 	},
 	{
 		// Hardware accelerated
-		{MFVideoFormat_NV12, NAV_PIXELFORMAT_NV12},
-		{MFVideoFormat_IYUV, NAV_PIXELFORMAT_YUV420},
-		{MFVideoFormat_I420, NAV_PIXELFORMAT_YUV420},
-		{MFVideoFormat_RGB24, NAV_PIXELFORMAT_RGB8}
+		{MFVideoFormat_NV12, NAVIA_PIXELFORMAT_NV12},
+		{MFVideoFormat_IYUV, NAVIA_PIXELFORMAT_YUV420},
+		{MFVideoFormat_I420, NAVIA_PIXELFORMAT_YUV420},
+		{MFVideoFormat_RGB24, NAVIA_PIXELFORMAT_RGB8}
 	}
 };
 
@@ -82,10 +79,12 @@ static std::map<GUID, bool, GUIDLessThan> audioTypeCombination = {
 	{MFAudioFormat_Float, true}
 };
 
+constexpr auto FILETIME_UNIX_OFFSET = 116444736000000000LL; // in 100-nanoseconds
+
 inline void unixTimestampToFILETIME(FILETIME &ft, uint64_t t = 0LL)
 {
 	ULARGE_INTEGER tv;
-	tv.QuadPart = (t * 10000000LL) + 116444736000000000LL;
+	tv.QuadPart = (t * MF_100NS_UNIT) + FILETIME_UNIX_OFFSET;
 	ft.dwHighDateTime = tv.HighPart;
 	ft.dwLowDateTime = tv.LowPart;
 }
@@ -131,11 +130,13 @@ struct WrappedPropVariant: public PROPVARIANT
 template<typename ...Any>
 static GUID getBestFormatGeneric(decltype(MFTEnumEx) *MFTEnumEx, IMFMediaType *mediaType, const std::map<GUID, Any...> &map, bool hwaccel)
 {
-	using namespace nav::mediafoundation;
+	using namespace navia::mediafoundation;
 
-	GUID mediaSubtype, majorType;
+	GUID mediaSubtype;
 	if (FAILED(mediaType->GetGUID(MF_MT_SUBTYPE, &mediaSubtype)))
 		return NULL_GUID;
+
+	GUID majorType;
 	if (FAILED(mediaType->GetGUID(MF_MT_MAJOR_TYPE, &majorType)))
 		return NULL_GUID;
 
@@ -164,7 +165,7 @@ static GUID getBestFormatGeneric(decltype(MFTEnumEx) *MFTEnumEx, IMFMediaType *m
 	GUID result = NULL_GUID;
 	bool found = false;
 
-	for (UINT32 i = 0; i < numDecoders && found == false; i++)
+	for (UINT32 i = 0; i < numDecoders && !found; i++)
 	{
 		ComPtr<IMFActivate> act(activator[i], false);
 		// https://www.winehq.org/pipermail/wine-devel/2020-March/162153.html
@@ -202,19 +203,20 @@ static GUID getBestFormatGeneric(decltype(MFTEnumEx) *MFTEnumEx, IMFMediaType *m
 		}
 	}
 
-	CoTaskMemFree(activator);
+	CoTaskMemFree((void *) activator);
 	return result;
 }
 
-static size_t bruteForceExtraHeight(uint32_t width, uint32_t height, size_t contigSize, nav_pixelformat pixelformat)
+static size_t bruteForceExtraHeight(uint32_t width, uint32_t height, size_t contigSize, navia_pixelformat pixelformat)
 {
 	constexpr size_t MAX_ADD_HEIGHT = 32;
-	size_t w = width, h = height;
+	size_t w = width;
+	size_t h = height;
 
 	switch (pixelformat)
 	{
-		case NAV_PIXELFORMAT_YUV420:
-		case NAV_PIXELFORMAT_NV12:
+		case NAVIA_PIXELFORMAT_YUV420:
+		case NAVIA_PIXELFORMAT_NV12:
 		{
 			// Try with this formula first
 			size_t i = contigSize * 2 / (3 * w) - h;
@@ -230,7 +232,7 @@ static size_t bruteForceExtraHeight(uint32_t width, uint32_t height, size_t cont
 			}
 			break;
 		}
-		case NAV_PIXELFORMAT_YUV444:
+		case NAVIA_PIXELFORMAT_YUV444:
 		{
 			for (size_t i = 0; i <= MAX_ADD_HEIGHT; i++)
 			{
@@ -249,23 +251,23 @@ static size_t bruteForceExtraHeight(uint32_t width, uint32_t height, size_t cont
 
 }
 
-#define NAV_FFCALL(name) backend->func_##name
+#define NAVIA_FFCALL(name) backend->func_##name
 
-namespace nav::mediafoundation
+namespace navia::mediafoundation
 {
 
-NavInputStream::NavInputStream(nav_input *input, const char *filename)
-: filename(filename ? filename : "")
+NaviaInputStream::NaviaInputStream(navia_input *input, const char *filename)
+: filename(filename != nullptr ? filename : "")
 , input(input)
 , refc(1)
 {}
 
-ULONG STDMETHODCALLTYPE NavInputStream::AddRef()
+ULONG STDMETHODCALLTYPE NaviaInputStream::AddRef()
 {
 	return ++refc;
 }
 
-HRESULT STDMETHODCALLTYPE NavInputStream::QueryInterface(REFIID riid, void **out)
+HRESULT STDMETHODCALLTYPE NaviaInputStream::QueryInterface(REFIID riid, void **out)
 {
 	if (riid == IID_IUnknown || riid == IID_ISequentialStream || riid == IID_IStream)
 	{
@@ -277,7 +279,7 @@ HRESULT STDMETHODCALLTYPE NavInputStream::QueryInterface(REFIID riid, void **out
 	return E_NOINTERFACE;
 }
 
-ULONG STDMETHODCALLTYPE NavInputStream::Release()
+ULONG STDMETHODCALLTYPE NaviaInputStream::Release()
 {
 	ULONG newref = --refc;
 	if (refc == 0)
@@ -286,33 +288,33 @@ ULONG STDMETHODCALLTYPE NavInputStream::Release()
 	return newref;
 }
 
-HRESULT STDMETHODCALLTYPE NavInputStream::Read(void *dest, ULONG size, ULONG *readed)
+HRESULT STDMETHODCALLTYPE NaviaInputStream::Read(void *dest, ULONG size, ULONG *readed)
 {
 	ULONG r = (ULONG) input->readf(dest, size);
-	if (readed)
+	if (readed != nullptr)
 		*readed = r;
 	return r == size ? S_OK : S_FALSE;
 }
 
-HRESULT STDMETHODCALLTYPE NavInputStream::Write(const void *src, ULONG size, ULONG *written)
+HRESULT STDMETHODCALLTYPE NaviaInputStream::Write(const void *src, ULONG size, ULONG *written)
 {
-	if (written)
+	if (written != nullptr)
 		*written = 0;
 	return STG_E_INVALIDFUNCTION;
 }
 
-HRESULT STDMETHODCALLTYPE NavInputStream::Clone(IStream **out)
+HRESULT STDMETHODCALLTYPE NaviaInputStream::Clone(IStream **out)
 {
 	/* Is this needed? */
 	*out = nullptr;
 	return STG_E_INVALIDFUNCTION;
 }
-HRESULT STDMETHODCALLTYPE NavInputStream::Commit(DWORD flags)
+HRESULT STDMETHODCALLTYPE NaviaInputStream::Commit(DWORD flags)
 {
 	return STG_E_INVALIDFUNCTION;
 }
 
-HRESULT STDMETHODCALLTYPE NavInputStream::CopyTo(IStream *pstm, ULARGE_INTEGER cb, ULARGE_INTEGER *readed, ULARGE_INTEGER *written)
+HRESULT STDMETHODCALLTYPE NaviaInputStream::CopyTo(IStream *pstm, ULARGE_INTEGER cb, ULARGE_INTEGER *readed, ULARGE_INTEGER *written)
 {
 	uint8_t *buf = new (std::nothrow) uint8_t[(size_t) cb.QuadPart];
 	if (buf == nullptr)
@@ -326,24 +328,25 @@ HRESULT STDMETHODCALLTYPE NavInputStream::CopyTo(IStream *pstm, ULARGE_INTEGER c
 	if (FAILED(res))
 		return res;
 	
-	if (readed)
+	if (readed != nullptr)
 		readed->QuadPart = rd;
-	if (written)
+	if (written != nullptr)
 		written->QuadPart = wr;
 
 	return ((ULONG) rd) == wr ? S_OK : S_FALSE;
 }
 
-HRESULT STDMETHODCALLTYPE NavInputStream::LockRegion(ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
+HRESULT STDMETHODCALLTYPE NaviaInputStream::LockRegion(ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
 {
 	return STG_E_INVALIDFUNCTION;
 }
-HRESULT STDMETHODCALLTYPE NavInputStream::Revert(void)
+
+HRESULT STDMETHODCALLTYPE NaviaInputStream::Revert(void)
 {
 	return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE NavInputStream::Seek(LARGE_INTEGER offset, DWORD origin, ULARGE_INTEGER *newpos)
+HRESULT STDMETHODCALLTYPE NaviaInputStream::Seek(LARGE_INTEGER offset, DWORD origin, ULARGE_INTEGER *newpos)
 {
 	uint64_t realoff = 0;
 
@@ -381,25 +384,25 @@ HRESULT STDMETHODCALLTYPE NavInputStream::Seek(LARGE_INTEGER offset, DWORD origi
 	if (!input->seekf(realoff))
 		return E_FAIL;
 	
-	if (newpos)
+	if (newpos != nullptr)
 		newpos->QuadPart = input->tellf();
 
 	return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE NavInputStream::SetSize(ULARGE_INTEGER libNewSize)
+HRESULT STDMETHODCALLTYPE NaviaInputStream::SetSize(ULARGE_INTEGER libNewSize)
 {
 	return STG_E_INVALIDFUNCTION;
 }
 
-HRESULT STDMETHODCALLTYPE NavInputStream::Stat(STATSTG *pstatstg, DWORD grfStatFlag)
+HRESULT STDMETHODCALLTYPE NaviaInputStream::Stat(STATSTG *pstatstg, DWORD grfStatFlag)
 {
 	if (pstatstg == nullptr)
 		return STG_E_INVALIDPOINTER;
 	
-	if (!(grfStatFlag | STATFLAG_NONAME))
+	if ((grfStatFlag | STATFLAG_NONAME) == 0)
 	{
-		std::wstring widefilename = nav::fromUTF8(filename);
+		std::wstring widefilename = navia::fromUTF8(filename);
 		wchar_t *mem = (wchar_t*) CoTaskMemAlloc((widefilename.length() + 1) * sizeof(wchar_t));
 		if (mem == nullptr)
 			return E_OUTOFMEMORY;
@@ -423,14 +426,14 @@ HRESULT STDMETHODCALLTYPE NavInputStream::Stat(STATSTG *pstatstg, DWORD grfStatF
 	return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE NavInputStream::UnlockRegion(ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
+HRESULT STDMETHODCALLTYPE NaviaInputStream::UnlockRegion(ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
 {
 	return STG_E_INVALIDFUNCTION;
 }
 
 
 
-MediaFoundationFrame::MediaFoundationFrame(nav_streaminfo_t *sinfo, ComPtr<IMFMediaBuffer> &buffer, double pts, size_t si)
+MediaFoundationFrame::MediaFoundationFrame(navia_streaminfo_t *sinfo, ComPtr<IMFMediaBuffer> &buffer, double pts, size_t si)
 : acquireData()
 , mediaBuffer(buffer)
 , buffer2D(buffer.dcast<IMF2DBuffer>(IMF2DBuffer_GUID))
@@ -446,7 +449,7 @@ size_t MediaFoundationFrame::getStreamIndex() const noexcept
 	return index;
 }
 
-const nav_streaminfo_t *MediaFoundationFrame::getStreamInfo() const noexcept
+const navia_streaminfo_t *MediaFoundationFrame::getStreamInfo() const noexcept
 {
 	return streamInfo;
 }
@@ -461,13 +464,13 @@ const uint8_t *const *MediaFoundationFrame::acquire(ptrdiff_t **strides, size_t 
 	if (acquireData.source == nullptr)
 	{
 		// These will throw exception on failure
-		if (streamInfo->type == NAV_STREAMTYPE_VIDEO && buffer2D)
+		if (streamInfo->type == NAVIA_STREAMTYPE_VIDEO && buffer2D)
 			acquire2D();
 		else
 			acquireDefault();
 	}
 
-	if (nplanes)
+	if (nplanes != nullptr)
 		*nplanes = acquireData.planes.size();
 	*strides = acquireData.strides.data();
 	return acquireData.planes.data();
@@ -486,17 +489,17 @@ void MediaFoundationFrame::acquireDefault()
 
 	switch (streamInfo->type)
 	{
-		case NAV_STREAMTYPE_UNKNOWN:
+		case NAVIA_STREAMTYPE_UNKNOWN:
 		default:
-			throw std::runtime_error("Assertion failed (unknown stream info) @ " __FILE__ ":" NAV_STRINGIZE(__LINE__) ". Please report!");
-		case NAV_STREAMTYPE_AUDIO:
+			throw std::runtime_error("Assertion failed (unknown stream info) @ " __FILE__ ":" NAVIA_STRINGIZE(__LINE__) ". Please report!");
+		case NAVIA_STREAMTYPE_AUDIO:
 		{
 			acquireData.source = source;
 			acquireData.planes.push_back(source);
 			acquireData.strides.push_back(bufsize);
 			break;
 		}
-		case NAV_STREAMTYPE_VIDEO:
+		case NAVIA_STREAMTYPE_VIDEO:
 		{
 			uint8_t *current = source;
 			acquireData.source = source;
@@ -548,21 +551,21 @@ void MediaFoundationFrame::acquire2D()
 
 	switch (streamInfo->video.format)
 	{
-		case NAV_PIXELFORMAT_UNKNOWN:
+		case NAVIA_PIXELFORMAT_UNKNOWN:
 		default:
-			throw std::logic_error("Assertion failed (unknown pixel format) @ " __FILE__ ":" NAV_STRINGIZE(__LINE__) ". Please report!");
-		case NAV_PIXELFORMAT_RGB8:
+			throw std::logic_error("Assertion failed (unknown pixel format) @ " __FILE__ ":" NAVIA_STRINGIZE(__LINE__) ". Please report!");
+		case NAVIA_PIXELFORMAT_RGB8:
 		{
 			if (planeCount(streamInfo->video.format) != 1)
-				throw std::logic_error("NAV_PIXELFORMAT_RGB8 planes != 1 @ " __FILE__ ":" NAV_STRINGIZE(__LINE__) ". Please report!");
+				throw std::logic_error("NAVIA_PIXELFORMAT_RGB8 planes != 1 @ " __FILE__ ":" NAVIA_STRINGIZE(__LINE__) ". Please report!");
 
 			acquireData.strides.push_back(stride);
 			acquireData.planes.push_back(current);
 
 			break;
 		}
-		case NAV_PIXELFORMAT_YUV420:
-		case NAV_PIXELFORMAT_YUV444:
+		case NAVIA_PIXELFORMAT_YUV420:
+		case NAVIA_PIXELFORMAT_YUV444:
 		{
 			size_t currentWidth = (size_t) abs(stride);
 			size_t currentHeight = height;
@@ -577,7 +580,7 @@ void MediaFoundationFrame::acquire2D()
 				else
 					current -= currentWidth * currentHeight;
 
-				if (i == 0 && streamInfo->video.format == NAV_PIXELFORMAT_YUV420)
+				if (i == 0 && streamInfo->video.format == NAVIA_PIXELFORMAT_YUV420)
 				{
 					// Divide by half
 					currentWidth = (currentWidth + 1) / 2;
@@ -587,10 +590,10 @@ void MediaFoundationFrame::acquire2D()
 
 			break;
 		}
-		case NAV_PIXELFORMAT_NV12:
+		case NAVIA_PIXELFORMAT_NV12:
 		{
 			if (planeCount(streamInfo->video.format) != 2)
-				throw std::logic_error("NAV_PIXELFORMAT_NV12 planes != 2 @ " __FILE__ ":" NAV_STRINGIZE(__LINE__) ". Please report!");
+				throw std::logic_error("NAVIA_PIXELFORMAT_NV12 planes != 2 @ " __FILE__ ":" NAVIA_STRINGIZE(__LINE__) ". Please report!");
 
 			// Y plane
 			acquireData.strides.push_back(stride);
@@ -608,7 +611,7 @@ void MediaFoundationFrame::acquire2D()
 
 void MediaFoundationFrame::release() noexcept
 {
-	if (acquireData.source)
+	if (acquireData.source != nullptr)
 	{
 		if (buffer2D)
 			buffer2D->Unlock2D();
@@ -619,9 +622,9 @@ void MediaFoundationFrame::release() noexcept
 	acquireData = {};
 }
 
-nav_hwacceltype MediaFoundationFrame::getHWAccelType() const noexcept
+navia_hwacceltype MediaFoundationFrame::getHWAccelType() const noexcept
 {
-	return ishwaccelerated ? NAV_HWACCELTYPE_D3D11 : NAV_HWACCELTYPE_NONE;
+	return ishwaccelerated ? NAVIA_HWACCELTYPE_D3D11 : NAVIA_HWACCELTYPE_NONE;
 }
 
 void *MediaFoundationFrame::getHWAccelHandle()
@@ -642,8 +645,8 @@ void *MediaFoundationFrame::getHWAccelHandle()
 
 MediaFoundationState::MediaFoundationState(
 	MediaFoundationBackend *backend,
-	nav_input *input,
-	ComPtr<NavInputStream> &is,
+	navia_input *input,
+	ComPtr<NaviaInputStream> &is,
 	ComPtr<IMFByteStream> &mfbs,
 	ComPtr<IMFSourceReader> &mfsr,
 	HWAccelState *hwaccelState
@@ -675,7 +678,7 @@ MediaFoundationState::MediaFoundationState(
 		else if (FAILED(hr))
 			runtimeErrorWithHRESULT("IMFSourceReader::GetCurrentMediaType failed", hr);
 
-		nav::StreamInfo streamInfo {NAV_STREAMTYPE_UNKNOWN};
+		navia::StreamInfo streamInfo {NAVIA_STREAMTYPE_UNKNOWN};
 		GUID majorType;
 
 		if (SUCCEEDED(mfMediaType->GetMajorType(&majorType)))
@@ -686,11 +689,11 @@ MediaFoundationState::MediaFoundationState(
 			if (majorType == MFMediaType_Audio)
 			{
 				// FIXME: Do not assume non-float and signed bps 16.
-				failed = FAILED(NAV_FFCALL(MFCreateMediaType)(partialType.dptr()));
+				failed = FAILED(NAVIA_FFCALL(MFCreateMediaType)(partialType.dptr()));
 
 				if (!failed)
 				{
-					GUID bestAudioFormat = getBestFormatGeneric(NAV_FFCALL(MFTEnumEx), mfMediaType.get(), audioTypeCombination, false);
+					GUID bestAudioFormat = getBestFormatGeneric(NAVIA_FFCALL(MFTEnumEx), mfMediaType.get(), audioTypeCombination, false);
 					if (bestAudioFormat == NULL_GUID)
 						bestAudioFormat = MFAudioFormat_PCM;
 
@@ -723,15 +726,15 @@ MediaFoundationState::MediaFoundationState(
 					if (!failed)
 					{
 						bool isFloat = audioTypeCombination[rawAudioType];
-						streamInfo.type = NAV_STREAMTYPE_AUDIO;
+						streamInfo.type = NAVIA_STREAMTYPE_AUDIO;
 						streamInfo.audio.format = makeAudioFormat(bps, isFloat, isFloat || bps > 8);
 					}
 				}
 			}
 			else if (majorType == MFMediaType_Video)
 			{
-				failed = FAILED(NAV_FFCALL(MFCreateMediaType)(partialType.dptr()));
-				nav_pixelformat pixfmt = NAV_PIXELFORMAT_UNKNOWN;
+				failed = FAILED(NAVIA_FFCALL(MFCreateMediaType)(partialType.dptr()));
+				navia_pixelformat pixfmt = NAVIA_PIXELFORMAT_UNKNOWN;
 
 				if (!failed)
 				{
@@ -744,7 +747,7 @@ MediaFoundationState::MediaFoundationState(
 					partialType->SetUINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
 
 					// Query best pixel format before brute-forcing.
-					GUID bestPixelFormat = getBestFormatGeneric(NAV_FFCALL(MFTEnumEx), mfMediaType.get(), mediaTypeCombination[hwaccel.active], hwaccel.active);
+					GUID bestPixelFormat = getBestFormatGeneric(NAVIA_FFCALL(MFTEnumEx), mfMediaType.get(), mediaTypeCombination[hwaccel.active], hwaccel.active);
 					if (bestPixelFormat != NULL_GUID)
 					{
 						partialType->SetGUID(MF_MT_SUBTYPE, bestPixelFormat);
@@ -773,7 +776,7 @@ MediaFoundationState::MediaFoundationState(
 					}
 				}
 
-				failed = failed || pixfmt == NAV_PIXELFORMAT_UNKNOWN;
+				failed = failed || pixfmt == NAVIA_PIXELFORMAT_UNKNOWN;
 
 				if (!failed)
 				{
@@ -789,7 +792,7 @@ MediaFoundationState::MediaFoundationState(
 
 					if (!failed)
 					{
-						streamInfo.type = NAV_STREAMTYPE_VIDEO;
+						streamInfo.type = NAVIA_STREAMTYPE_VIDEO;
 						streamInfo.video.fps = derationalize(fps.HighPart, fps.LowPart);
 						streamInfo.video.width = dimensions.HighPart;
 						streamInfo.video.height = dimensions.LowPart;
@@ -846,11 +849,11 @@ size_t MediaFoundationState::getStreamCount() const noexcept
 	return streamInfoList.size();
 }
 
-const nav_streaminfo_t *MediaFoundationState::getStreamInfo(size_t index) const noexcept
+const navia_streaminfo_t *MediaFoundationState::getStreamInfo(size_t index) const noexcept
 {
 	if (index >= streamInfoList.size())
 	{
-		nav::error::set("Stream index out of range");
+		navia::error::set("Stream index out of range");
 		return nullptr;
 	}
 
@@ -863,13 +866,13 @@ bool MediaFoundationState::isStreamEnabled(size_t index) const noexcept
 
 	if (index >= streamInfoList.size())
 	{
-		nav::error::set("Index out of range");
+		navia::error::set("Index out of range");
 		return false;
 	}
 
 	if (FAILED(mfSourceReader->GetStreamSelection((DWORD) index, &enabled)))
 	{
-		nav::error::set("IMFSourceReader::GetStreamSelection failed");
+		navia::error::set("IMFSourceReader::GetStreamSelection failed");
 		return false;
 	}
 
@@ -880,19 +883,19 @@ bool MediaFoundationState::setStreamEnabled(size_t index, bool enabled)
 {
 	if (prepared)
 	{
-		nav::error::set("Decoder already initialized");
+		navia::error::set("Decoder already initialized");
 		return false;
 	}
 
 	if (index >= streamInfoList.size())
 	{
-		nav::error::set("Index out of range");
+		navia::error::set("Index out of range");
 		return false;
 	}
 
 	if (FAILED(mfSourceReader->SetStreamSelection((DWORD) index, (BOOL) enabled)))
 	{
-		nav::error::set("IMFSourceReader::SetStreamSelection failed");
+		navia::error::set("IMFSourceReader::SetStreamSelection failed");
 		return false;
 	}
 
@@ -921,7 +924,7 @@ double MediaFoundationState::setPosition(double position)
 
 	if (FAILED(mfSourceReader->SetCurrentPosition(NULL_GUID, pvar)))
 	{
-		nav::error::set("IMFSourceReader::SetCurrentPosition failed");
+		navia::error::set("IMFSourceReader::SetCurrentPosition failed");
 		return -1.0;
 	}
 
@@ -929,7 +932,7 @@ double MediaFoundationState::setPosition(double position)
 	return position;
 }
 
-nav_frame_t *MediaFoundationState::read()
+navia_frame_t *MediaFoundationState::read()
 {
 	while (true)
 	{
@@ -960,7 +963,7 @@ nav_frame_t *MediaFoundationState::read()
 	}
 }
 
-nav_frame_t *MediaFoundationState::decode(ComPtr<IMFSample> &mfSample, size_t streamIndex, LONGLONG timestamp)
+navia_frame_t *MediaFoundationState::decode(ComPtr<IMFSample> &mfSample, size_t streamIndex, LONGLONG timestamp)
 {
 	DWORD maxbufsize, bufsize;
 
@@ -978,22 +981,22 @@ nav_frame_t *MediaFoundationState::decode(ComPtr<IMFSample> &mfSample, size_t st
 
 
 
-#undef NAV_FFCALL
-#define NAV_FFCALL(n) func_##n
+#undef NAVIA_FFCALL
+#define NAVIA_FFCALL(n) func_##n
 
 MediaFoundationBackend::MediaFoundationBackend()
 : d3d11("d3d11.dll")
 , mfplat("mfplat.dll")
 , mfreadwrite("mfreadwrite.dll")
 , callCoUninitialize(true)
-#define _NAV_PROXY_FUNCTION_POINTER(lib, n) , func_##n(nullptr)
+#define _NAVIA_PROXY_FUNCTION_POINTER(lib, n) , func_##n(nullptr)
 #include "MediaFoundationPointers.h"
-#undef _NAV_PROXY_FUNCTION_POINTER
+#undef _NAVIA_PROXY_FUNCTION_POINTER
 {
 	if (
-#define _NAV_PROXY_FUNCTION_POINTER(lib, n) !lib.get(#n, &func_##n) ||
+#define _NAVIA_PROXY_FUNCTION_POINTER(lib, n) !lib.get(#n, &func_##n) ||
 #include "MediaFoundationPointers.h"
-#undef _NAV_PROXY_FUNCTION_POINTER
+#undef _NAVIA_PROXY_FUNCTION_POINTER
 		!true // needed to fix the preprocessor stuff
 	)
 		throw std::runtime_error("cannot load MediaFoundation function pointer");
@@ -1004,7 +1007,7 @@ MediaFoundationBackend::MediaFoundationBackend()
 
 	callCoUninitialize = SUCCEEDED(hr) || hr == RPC_E_CHANGED_MODE;
 
-	if (FAILED(NAV_FFCALL(MFStartup)(MF_VERSION, MFSTARTUP_NOSOCKET)))
+	if (FAILED(NAVIA_FFCALL(MFStartup)(MF_VERSION, MFSTARTUP_NOSOCKET)))
 	{
 		if (callCoUninitialize)
 			CoUninitialize();
@@ -1014,19 +1017,19 @@ MediaFoundationBackend::MediaFoundationBackend()
 
 MediaFoundationBackend::~MediaFoundationBackend()	
 {
-	NAV_FFCALL(MFShutdown)();
+	NAVIA_FFCALL(MFShutdown)();
 	if (callCoUninitialize)
 		CoUninitialize();
 }
 
-State *MediaFoundationBackend::open(nav_input *input, const char *filename, const nav_settings *settings)
+State *MediaFoundationBackend::open(navia_input *input, const char *filename, const navia_settings *settings)
 {
 	input->seekf(0);
 
-	ComPtr<NavInputStream> istream(new NavInputStream(input, filename), false);		
+	ComPtr<NaviaInputStream> istream(new NaviaInputStream(input, filename), false);		
 	ComPtr<IMFByteStream> byteStream;
 
-	if (HRESULT hr = NAV_FFCALL(MFCreateMFByteStreamOnStream)(istream.get(), byteStream.dptr()); FAILED(hr))
+	if (HRESULT hr = NAVIA_FFCALL(MFCreateMFByteStreamOnStream)(istream.get(), byteStream.dptr()); FAILED(hr))
 		runtimeErrorWithHRESULT("MFCreateMFByteStreamOnStream failed", hr);
 
 	if (filename)
@@ -1034,7 +1037,7 @@ State *MediaFoundationBackend::open(nav_input *input, const char *filename, cons
 		// Try set the filename
 		if (ComPtr<IMFAttributes> attrs = byteStream.dcast<IMFAttributes>(IMFAttributes_GUID))
 		{
-			std::wstring wfilename = nav::fromUTF8(filename);
+			std::wstring wfilename = navia::fromUTF8(filename);
 			attrs->SetString(MF_BYTESTREAM_ORIGIN_NAME, wfilename.c_str());
 		}
 	}
@@ -1045,7 +1048,7 @@ State *MediaFoundationBackend::open(nav_input *input, const char *filename, cons
 
 	if (!settings->disable_hwaccel)
 	{
-		if (SUCCEEDED(NAV_FFCALL(D3D11CreateDevice)(
+		if (SUCCEEDED(NAVIA_FFCALL(D3D11CreateDevice)(
 			nullptr,
 			D3D_DRIVER_TYPE_HARDWARE,
 			nullptr,
@@ -1058,7 +1061,7 @@ State *MediaFoundationBackend::open(nav_input *input, const char *filename, cons
 			nullptr
 		)))
 		{
-			if (SUCCEEDED(NAV_FFCALL(MFCreateDXGIDeviceManager)(&hwaccelState.resetToken, hwaccelState.dxgidm.dptr())))
+			if (SUCCEEDED(NAVIA_FFCALL(MFCreateDXGIDeviceManager)(&hwaccelState.resetToken, hwaccelState.dxgidm.dptr())))
 			{
 				hwaccelState.active = SUCCEEDED(hwaccelState.dxgidm->ResetDevice(
 					hwaccelState.d3d11dev.get(),
@@ -1073,7 +1076,7 @@ State *MediaFoundationBackend::open(nav_input *input, const char *filename, cons
 	}
 
 	ComPtr<IMFAttributes> attrs;
-	if (HRESULT hr = NAV_FFCALL(MFCreateAttributes)(attrs.dptr(), 2); FAILED(hr))
+	if (HRESULT hr = NAVIA_FFCALL(MFCreateAttributes)(attrs.dptr(), 2); FAILED(hr))
 		runtimeErrorWithHRESULT("MFCreateAttributes failed", hr);
 
 	bool useHWAccel = hwaccelState.active;
@@ -1084,7 +1087,7 @@ State *MediaFoundationBackend::open(nav_input *input, const char *filename, cons
 	}
 
 	ComPtr<IMFSourceReader> sourceReader;
-	if (HRESULT hr = NAV_FFCALL(MFCreateSourceReaderFromByteStream)(
+	if (HRESULT hr = NAVIA_FFCALL(MFCreateSourceReaderFromByteStream)(
 		byteStream.get(),
 		useHWAccel ? attrs.get() : nullptr,
 		sourceReader.dptr()
@@ -1100,9 +1103,9 @@ const char *MediaFoundationBackend::getName() const noexcept
 	return "mediafoundation";
 }
 
-nav_backendtype MediaFoundationBackend::getType() const noexcept
+navia_backendtype MediaFoundationBackend::getType() const noexcept
 {
-	return NAV_BACKENDTYPE_OS_API;
+	return NAVIA_BACKENDTYPE_OS_API;
 }
 
 const char *MediaFoundationBackend::getInfo()
@@ -1121,11 +1124,11 @@ Backend *create()
 	}
 	catch(const std::exception &e)
 	{
-		nav::error::set(e);
+		navia::error::set(e);
 		return nullptr;
 	}
 }
 
 }
 
-#endif /* NAV_BACKEND_MEDIAFOUNDATION */
+#endif /* NAVIA_BACKEND_MEDIAFOUNDATION */
