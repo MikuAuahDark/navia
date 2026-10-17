@@ -194,6 +194,24 @@ private:
 	bool ishwaccelerated;
 };
 
+class MediaFoundationBackend;
+
+class MediaFoundationAcquire
+{
+public:
+	MediaFoundationAcquire(MediaFoundationBackend *backend);
+	~MediaFoundationAcquire();
+	void validate();
+	inline operator bool()
+	{
+		return SUCCEEDED(code);
+	}
+
+private:
+	MediaFoundationBackend *backend;
+	HRESULT code;
+};
+
 class MediaFoundationState: public State
 {
 public:
@@ -206,7 +224,7 @@ public:
 		HWAccelState *hwaccelState
 	);
 	~MediaFoundationState() override;
-	
+
 	navia::Backend *getBackend() const noexcept override;
 	size_t getStreamCount() const noexcept override;
 	const navia_streaminfo_t *getStreamInfo(size_t index) const noexcept override;
@@ -223,6 +241,7 @@ private:
 	navia_frame_t *decode(ComPtr<IMFSample> &mfSample, size_t streamIndex, LONGLONG timestamp);
 
 	MediaFoundationBackend *backend;
+	MediaFoundationAcquire aq;
 
 	navia_input *originalInput;
 	ComPtr<NaviaInputStream> inputStream;
@@ -235,7 +254,6 @@ private:
 	bool prepared;
 };
 
-
 class MediaFoundationBackend: public Backend
 {
 public:
@@ -247,6 +265,7 @@ public:
 
 private:
 	friend Backend *create();
+	friend struct MediaFoundationAcquire;
 	MediaFoundationBackend();
 
 	DynLib d3d11, mfplat, mfreadwrite;

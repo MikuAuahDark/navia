@@ -284,7 +284,7 @@ ULONG STDMETHODCALLTYPE NaviaInputStream::Release()
 	ULONG newref = --refc;
 	if (refc == 0)
 		delete this;
-	
+
 	return newref;
 }
 
@@ -327,7 +327,7 @@ HRESULT STDMETHODCALLTYPE NaviaInputStream::CopyTo(IStream *pstm, ULARGE_INTEGER
 
 	if (FAILED(res))
 		return res;
-	
+
 	if (readed != nullptr)
 		readed->QuadPart = rd;
 	if (written != nullptr)
@@ -383,7 +383,7 @@ HRESULT STDMETHODCALLTYPE NaviaInputStream::Seek(LARGE_INTEGER offset, DWORD ori
 	}
 	if (!input->seekf(realoff))
 		return E_FAIL;
-	
+
 	if (newpos != nullptr)
 		newpos->QuadPart = input->tellf();
 
@@ -399,7 +399,7 @@ HRESULT STDMETHODCALLTYPE NaviaInputStream::Stat(STATSTG *pstatstg, DWORD grfSta
 {
 	if (pstatstg == nullptr)
 		return STG_E_INVALIDPOINTER;
-	
+
 	if ((grfStatFlag | STATFLAG_NONAME) == 0)
 	{
 		std::wstring widefilename = navia::fromUTF8(filename);
@@ -618,7 +618,7 @@ void MediaFoundationFrame::release() noexcept
 		else
 			mediaBuffer->Unlock();
 	}
-	
+
 	acquireData = {};
 }
 
@@ -652,6 +652,7 @@ MediaFoundationState::MediaFoundationState(
 	HWAccelState *hwaccelState
 )
 : backend(backend)
+, aq(backend)
 , originalInput(input)
 , inputStream(is)
 , mfByteStream(mfbs)
@@ -661,12 +662,14 @@ MediaFoundationState::MediaFoundationState(
 , currentPosition(0)
 , prepared(false)
 {
+	aq.validate();
+
 	if (hwaccelState)
 		hwaccel = *hwaccelState;
 
 	if (HRESULT hr = mfsr->SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, TRUE); FAILED(hr))
 		runtimeErrorWithHRESULT("IMFSourceReader::SetStreamSelection failed", hr);
-	
+
 	// Find how many streams
 	for (DWORD i = 0; i < 0xFFFFFFFCU; i++)
 	{
@@ -908,7 +911,7 @@ double MediaFoundationState::getDuration() noexcept
 
 	if (FAILED(mfSourceReader->GetPresentationAttribute(MF_SOURCE_READER_MEDIASOURCE, MF_PD_DURATION, &pvar)))
 		return -1.0;
-	
+
 	return derationalize(pvar.uhVal.QuadPart, (ULONGLONG) MF_100NS_UNIT);
 }
 
@@ -981,6 +984,27 @@ navia_frame_t *MediaFoundationState::decode(ComPtr<IMFSample> &mfSample, size_t 
 
 
 
+MediaFoundationAcquire::MediaFoundationAcquire(MediaFoundationBackend *backend)
+: backend(backend)
+, code(S_OK)
+{
+	code = NAVIA_FFCALL(MFStartup)(MF_VERSION, MFSTARTUP_NOSOCKET);
+}
+
+MediaFoundationAcquire::~MediaFoundationAcquire()
+{
+	if (SUCCEEDED(code))
+		NAVIA_FFCALL(MFShutdown)();
+}
+
+void MediaFoundationAcquire::validate()
+{
+	if (FAILED(code))
+		runtimeErrorWithHRESULT("MFStartup failed", code);
+}
+
+
+
 #undef NAVIA_FFCALL
 #define NAVIA_FFCALL(n) func_##n
 
@@ -1007,26 +1031,28 @@ MediaFoundationBackend::MediaFoundationBackend()
 
 	callCoUninitialize = SUCCEEDED(hr) || hr == RPC_E_CHANGED_MODE;
 
-	if (FAILED(NAVIA_FFCALL(MFStartup)(MF_VERSION, MFSTARTUP_NOSOCKET)))
+	if (MediaFoundationAcquire aq(this); !aq)
 	{
 		if (callCoUninitialize)
 			CoUninitialize();
-		runtimeErrorWithHRESULT("MFStartup failed", hr);
+		aq.validate(); // must fail
 	}
 }
 
-MediaFoundationBackend::~MediaFoundationBackend()	
+MediaFoundationBackend::~MediaFoundationBackend()
 {
-	NAVIA_FFCALL(MFShutdown)();
 	if (callCoUninitialize)
 		CoUninitialize();
 }
 
 State *MediaFoundationBackend::open(navia_input *input, const char *filename, const navia_settings *settings)
 {
+	MediaFoundationAcquire aq(this);
+	aq.validate();
+
 	input->seekf(0);
 
-	ComPtr<NaviaInputStream> istream(new NaviaInputStream(input, filename), false);		
+	ComPtr<NaviaInputStream> istream(new NaviaInputStream(input, filename), false);
 	ComPtr<IMFByteStream> byteStream;
 
 	if (HRESULT hr = NAVIA_FFCALL(MFCreateMFByteStreamOnStream)(istream.get(), byteStream.dptr()); FAILED(hr))
@@ -1041,7 +1067,7 @@ State *MediaFoundationBackend::open(navia_input *input, const char *filename, co
 			attrs->SetString(MF_BYTESTREAM_ORIGIN_NAME, wfilename.c_str());
 		}
 	}
-	
+
 	// Setup hardware acceleration
 	HWAccelState hwaccelState {};
 	hwaccelState.active = false;
