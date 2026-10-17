@@ -291,7 +291,7 @@ AndroidNDKState::AndroidNDKState(AndroidNDKBackend *backend, UniqueMediaExtracto
 		int64_t val64 = 0;
 		float valf = 0.0;
 
-		// Ensure the output format is something NAVIA currently understood
+		// Ensure the output format is something Navia currently understood
 		if (streamType == NAVIA_STREAMTYPE_VIDEO)
 		{
 			navia_pixelformat outputPixFmt = NAVIA_PIXELFORMAT_UNKNOWN;

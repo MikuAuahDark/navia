@@ -148,7 +148,7 @@ int main(int argc, char *argv[])
 	 * * `navia_input_populate_from_memory` - Load from memory.
 	 *
 	 * Also you'd notice that we allocate `navia_input` on the stack.
-	 * Yes, that's totally fine and intended way to use NAVIA.
+	 * Yes, that's totally fine and intended way to use Navia.
 	 */
 	navia_input input;
 	/* For this one, we just use `navia_input_populate_from_file` for convenience. */
@@ -196,7 +196,7 @@ int main(int argc, char *argv[])
 	const char *backendName = navia_backend_name(backendIndex);
 
 	printf("File: %s\n", argv[1]);
-	printf("NAVIA version: %s\n", navia_version_string());
+	printf("Navia version: %s\n", navia_version_string());
 	printf("Backend: %s (#%zu)\n", backendName ? backendName : "unknown", backendIndex);
 	print_duration(navia_duration(navia.get()));
 

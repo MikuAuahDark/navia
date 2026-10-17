@@ -37,7 +37,7 @@ if(NOT DEFINED NAVIA_SHARED)
 		set(NAVIA_SHARED_DEFAULT 0)
 	endif()
 endif()
-option(NAVIA_SHARED "NAVIA: Build as shared library" ${NAVIA_SHARED_DEFAULT})
+option(NAVIA_SHARED "Navia: Build as shared library" ${NAVIA_SHARED_DEFAULT})
 
 if(NAVIA_SHARED)
 	set(NAVIA_SHARED_VALUE SHARED)
@@ -100,11 +100,13 @@ if(NAVIA_SHARED)
 	target_compile_definitions(navia PUBLIC NAVIA_SHARED)
 
 	if(ANDROID)
-		# https://developer.android.com/guide/practices/page-sizes
-		target_link_options(navia PRIVATE
-			"-Wl,-z,max-page-size=16384"
-			"-Wl,-z,common-page-size=16384"
-		)
+		if(CMAKE_ANDROID_NDK_VERSION VERSION_LESS 28)
+			# https://developer.android.com/guide/practices/page-sizes
+			target_link_options(navia PRIVATE
+				"-Wl,-z,max-page-size=16384"
+				"-Wl,-z,common-page-size=16384"
+			)
+		endif()
 	else()
 		set_target_properties(navia PROPERTIES
 			VERSION ${NAVIA_VERSION_MAJOR}.${NAVIA_VERSION_MINOR}.${NAVIA_VERSION_PATCH}

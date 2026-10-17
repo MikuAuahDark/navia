@@ -96,7 +96,7 @@ typedef struct navia_settings
 	const size_t *backend_order;
 	/* Hint to backend on how many threads to use. If this is 0, it defaults to value of NAVIA_THREAD_COUNT environment
 	 * variable, or amount of threads in the current user system.
-	 * **Note**: NAVIA won't check if the specified `max_threads` exceeded the amount of the system CPU thread count,
+	 * **Note**: Navia won't check if the specified `max_threads` exceeded the amount of the system CPU thread count,
 	 * but it ensure the value is at least 1.
 	 */
 	uint32_t max_threads;

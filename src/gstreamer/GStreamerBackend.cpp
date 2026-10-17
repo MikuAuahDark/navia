@@ -26,7 +26,7 @@ constexpr struct NAVIAGstPixelFormatMap
 	const char *gstName;
 	navia_pixelformat format;
 } NAVIA_PIXELFORMAT_MAP[] = {
-	// When NAVIA supports more pixel format, add it here.
+	// When Navia supports more pixel format, add it here.
 	{"Y444", NAVIA_PIXELFORMAT_YUV444},
 	{"I420", NAVIA_PIXELFORMAT_YUV420},
 	{"NV12", NAVIA_PIXELFORMAT_NV12},
@@ -488,7 +488,7 @@ double GStreamerState::getDuration() noexcept
 
 	if (NAVIA_FFCALL(gst_element_query_duration)(pipeline.get(), GST_FORMAT_TIME, &dur))
 		return derationalize<gint64>(dur, GST_SECOND);
-	
+
 	navia::error::set("gst_element_query_duration failed");
 	return -1;
 }
@@ -499,7 +499,7 @@ double GStreamerState::getPosition() noexcept
 
 	if (NAVIA_FFCALL(gst_element_query_position)(pipeline.get(), GST_FORMAT_TIME, &pos))
 		return derationalize<gint64>(pos, GST_SECOND);
-	
+
 	navia::error::set("gst_element_query_position failed");
 	return -1;
 }
@@ -750,7 +750,7 @@ void GStreamerState::padAdded(GstElement *element, GstPad *pad, GStreamerState *
 		GstElement *converter = NAVIA_FFCALL(gst_element_factory_make)(videoStream ? "videoconvert" : "audioconvert", nullptr);
 		GstElement *sink = NAVIA_FFCALL(gst_element_factory_make)("appsink", nullptr);
 		GstCaps *targetCap = nullptr;
-		
+
 		// Populate caps
 		if (videoStream)
 			targetCap = self->newVideoCapsForNAVIA();
@@ -897,7 +897,7 @@ GStreamerBackend::GStreamerBackend()
 		!true // needed to fix the preprocessor stuff
 	)
 		throw std::runtime_error("Cannot load necessary function pointer");
-	
+
 	GError *err = nullptr;
 	if (!NAVIA_FFCALL(gst_init_check)(nullptr, nullptr, &err))
 	{

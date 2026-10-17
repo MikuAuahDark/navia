@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
 	 * * `navia_input_populate_from_memory` - Load from memory.
 	 *
 	 * Also you'd notice that we allocate `navia_input` on the stack.
-	 * Yes, that's totally fine and intended way to use NAVIA.
+	 * Yes, that's totally fine and intended way to use Navia.
 	 */
 	navia_input input;
 	/* For this one, we just use `navia_input_populate_from_file` for convenience. */
@@ -210,7 +210,7 @@ int main(int argc, char *argv[])
 		{
 			/* We got audio stream. */
 			audioStreamInfo = sinfo;
-			/* Enable this stream. Although NAVIA defaults to enabling
+			/* Enable this stream. Although Navia defaults to enabling
 			 * all streams, it won't hurt enabling it again.
 			 */
 			if (!navia_stream_enable(navia.get(), i, true))

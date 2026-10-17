@@ -1,4 +1,4 @@
-NAVIA
+Navia
 =====
 
 NPad Audio Video Interface API.
@@ -8,7 +8,7 @@ Performs audio and video decoding using platform-specific backends.
 Backends
 -----
 
-NAVIA relies on various backends to perform audio and video decoding.
+Navia relies on various backends to perform audio and video decoding.
 
 | Backend           | Kind      | OS Availability         | `navia_backend_name()` | Disablement Env. Var\* | Additional Notes                                         |
 |-------------------|-----------|-------------------------|----------------------|------------------------|----------------------------------------------------------|
@@ -43,7 +43,7 @@ Example command-line for CMake:
 cmake -Bbuild -S. --install-prefix $PWD/installdir -DFFMPEG6_DIR=/path/to/ffmpeg6 -DFFMPEG7_DIR=/path/to/ffmpeg7
 ```
 
-For best compatibility, it's recommended to use FFmpeg n.0 header files. Note that NAVIA only needs functional header
+For best compatibility, it's recommended to use FFmpeg n.0 header files. Note that Navia only needs functional header
 files to compile as library files will be loaded at runtime.
 
 Examples

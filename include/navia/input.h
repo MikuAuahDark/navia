@@ -4,8 +4,8 @@
 #include "types.h"
 
 /**
- * @brief NAVIA "input stream".
- * 
+ * @brief Navia "input stream".
+ *
  * For user-defined "input stream", populate the struct accordingly.
  * This struct can be allocated on stack, and is assumed so.
  */
