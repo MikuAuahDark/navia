@@ -84,6 +84,7 @@ jobs:
     - name: Setup
       run: |
         set -e
+        sed -i 's|deb.debian.org/debian-security|security.debian.org/debian-security|g' /etc/apt/sources.list
         echo "deb http://archive.debian.org/debian bullseye-backports main" >> /etc/apt/sources.list.d/bullseye-backports.list
         apt-get update
         apt-get install -y \

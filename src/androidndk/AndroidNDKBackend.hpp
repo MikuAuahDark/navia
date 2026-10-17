@@ -6,7 +6,6 @@
 #ifdef NAVIA_BACKEND_ANDROIDNDK
 
 #include "../Internal.hpp"
-#include "../Backend.hpp"
 
 namespace navia::androidndk
 {

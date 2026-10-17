@@ -101,7 +101,10 @@ if(NAVIA_SHARED)
 
 	if(ANDROID)
 		# https://developer.android.com/guide/practices/page-sizes
-		target_link_options(navia PRIVATE "-Wl,-z,max-page-size=16384")
+		target_link_options(navia PRIVATE
+			"-Wl,-z,max-page-size=16384"
+			"-Wl,-z,common-page-size=16384"
+		)
 	else()
 		set_target_properties(navia PROPERTIES
 			VERSION ${NAVIA_VERSION_MAJOR}.${NAVIA_VERSION_MINOR}.${NAVIA_VERSION_PATCH}

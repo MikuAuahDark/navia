@@ -17,9 +17,9 @@
 
 #include <stdexcept>
 
-#include "Error.hpp"
+#include "../Common.hpp"
+#include "../Error.hpp"
 #include "AndroidNDKInternal.hpp"
-#include "Common.hpp"
 
 #define NAVIA_FFCALL(n) f->ptr_##n
 
