@@ -58,7 +58,7 @@ NAVIA_API const char *navia_version_string();
  * @brief Get last error message from last invocation of Navia functions.
  * @return Pointer to the error message, or NULL if there are no errors.
  * @note Error messages are local to the caller thread.
- * @warning The error message pointer will be invalid when calling another Navia function!
+ * @warning The error message pointer and its contents is only valid after last Navia function!
  */
 NAVIA_API const char *navia_error();
 
