@@ -18,6 +18,7 @@ Navia relies on various backends to perform audio and video decoding.
 | [FFmpeg] 6        | 3rd-Party | Windows, Linux, Android | `"ffmpeg6"`          | `FFMPEG6`              | Requires the appropriate header files to be present.\*\* |
 | [FFmpeg] 7        | 3rd-Party | Windows, Linux, Android | `"ffmpeg7"`          | `FFMPEG7`              | Requires the appropriate header files to be present.\*\* |
 | [FFmpeg] 8        | 3rd-Party | Windows, Linux, Android | `"ffmpeg8"`          | `FFMPEG8`              | Requires the appropriate header files to be present.\*\* |
+| [FFmpeg] 9        | 3rd-Party | Windows, Linux, Android | `"ffmpeg9"`          | `FFMPEG9`              | Requires the appropriate header files to be present.\*\* |
 | [GStreamer]       | 3rd-Party | Linux                   | `"gstreamer"`        | `GSTREAMER`            | Requires the appropriate header files to be present.     |
 | [MediaFoundation] | OS API    | Windows                 | `"mediafoundation"`  | `MEDIAFOUNDATION`      | UWP target is not supported.                             |
 
@@ -33,7 +34,7 @@ Navia relies on various backends to perform audio and video decoding.
 Multiple FFmpeg Version Support
 -----
 
-To compile with multiple FFmpeg versions, pass `-DFFMPEGn_DIR` (where `n` is between 4 to 8, both inclusive) in CMake
+To compile with multiple FFmpeg versions, pass `-DFFMPEGn_DIR` (where `n` is between 4 to 9, both inclusive) in CMake
 command-line to location where FFmpeg header files are placed. Note that the directory should be one directory above
 the `include`. For example, if you have FFmpeg 7 includes in `/path/to/ffmpeg7/include`, then do
 `-DFFMPEG7_DIR=/path/to/ffmpeg7`.

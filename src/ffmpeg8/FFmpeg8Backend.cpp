@@ -5,4 +5,4 @@
 #include "FFmpeg8Backend.hpp"
 #include "../ffmpeg_common/FFmpegBackend.cpp"
 
-#endif /* NAVIA_BACKEND_FFMPEG_7 */
+#endif /* NAVIA_BACKEND_FFMPEG_8 */

@@ -33,6 +33,10 @@
 #include "ffmpeg8/FFmpeg8Backend.hpp"
 #endif
 
+#ifdef NAVIA_BACKEND_FFMPEG_9
+#include "ffmpeg9/FFmpeg9Backend.hpp"
+#endif
+
 #ifdef NAVIA_BACKEND_GSTREAMER
 #include "gstreamer/GStreamerBackend.hpp"
 #endif
@@ -187,6 +191,9 @@ private:
 	std::mutex mutex;
 	navia_settings defaultSettings;
 } backendContainer({
+#ifdef NAVIA_BACKEND_FFMPEG_9
+	&navia::ffmpeg9::create,
+#endif
 #ifdef NAVIA_BACKEND_FFMPEG_8
 	&navia::ffmpeg8::create,
 #endif

@@ -1274,9 +1274,8 @@ State *FFmpegBackend::open(navia_input *input, const char *filename, const navia
 	formatContext->flags |= AVFMT_FLAG_CUSTOM_IO;
 
 	AVFormatContext *tempFormatContext = formatContext.get();
-	int errcode = 0;
 
-	if ((errcode = NAVIA_FFCALL(avformat_open_input)(&tempFormatContext, filename, nullptr, nullptr)) < 0)
+	if (int errcode = NAVIA_FFCALL(avformat_open_input)(&tempFormatContext, filename, nullptr, nullptr); errcode < 0)
 	{
 		formatContext.release(); // prevent double-free
 		throwFromAVError(NAVIA_FFCALL(av_strerror), errcode);
@@ -1321,7 +1320,7 @@ const char *FFmpegBackend::getInfo()
 				<< vinfo.name << " "
 				<< AV_VERSION_MAJOR(ver) << "."
 				<< AV_VERSION_MINOR(ver) << "."
-				<< AV_VERSION_MICRO(ver)<< "; ";
+				<< AV_VERSION_MICRO(ver) << "; ";
 		}
 
 		info = infobuf.str();
