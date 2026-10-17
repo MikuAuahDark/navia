@@ -18,7 +18,7 @@ jobs:
       with:
         repository: GyanD/codexffmpeg
         tag: "5.0"
-        fileName: ffmpeg-5.0-full_build-shared.7z 
+        fileName: ffmpeg-5.0-full_build-shared.7z
         tarBall: false
         zipBall: false
     - name: Get FFmpeg 6
@@ -26,7 +26,7 @@ jobs:
       with:
         repository: GyanD/codexffmpeg
         tag: "6.0"
-        fileName: ffmpeg-6.0-full_build-shared.7z 
+        fileName: ffmpeg-6.0-full_build-shared.7z
         tarBall: false
         zipBall: false
     - name: Get FFmpeg 7
@@ -34,7 +34,7 @@ jobs:
       with:
         repository: GyanD/codexffmpeg
         tag: "7.0"
-        fileName: ffmpeg-7.0-full_build-shared.7z 
+        fileName: ffmpeg-7.0-full_build-shared.7z
         tarBall: false
         zipBall: false
     - name: Get FFmpeg 8
@@ -42,11 +42,11 @@ jobs:
       with:
         repository: GyanD/codexffmpeg
         tag: "8.0"
-        fileName: ffmpeg-8.0-full_build-shared.7z 
+        fileName: ffmpeg-8.0-full_build-shared.7z
         tarBall: false
         zipBall: false
     # A note to myself and other: FFmpeg build is for x64, but it doesn't matter. Only the include files are
-    # necessary for NAV to work as it will use runtime loading.
+    # necessary for Navia to work as it will use runtime loading.
     - name: Extract FFmpeg
       run: |
         7z x ffmpeg-5.0-full_build-shared.7z
@@ -65,7 +65,7 @@ jobs:
     - name: Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: nav-dll-${{ matrix.PLATFORM }}
+        name: navia-dll-${{ matrix.PLATFORM }}
         path: install/
         compression-level: 9
   Ubuntu:
@@ -92,7 +92,7 @@ jobs:
           cmake-data/bullseye-backports \
           libgstreamer1.0-dev \
           libgstreamer-plugins-base1.0-dev
-      # NAV
+      # Navia
     - name: Checkout
       uses: actions/checkout@v4
       # FFmpeg 4
@@ -218,7 +218,7 @@ jobs:
     - name: Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: nav-linux-${{ matrix.platform.arch }}
+        name: navia-linux-${{ matrix.platform.arch }}
         path: install/
         compression-level: 9
   Android:
@@ -236,6 +236,6 @@ jobs:
     - name: Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: nav-android-${{ matrix.abi }}
+        name: navia-android-${{ matrix.abi }}
         path: install/
         compression-level: 9

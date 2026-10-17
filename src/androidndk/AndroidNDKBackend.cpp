@@ -1,14 +1,14 @@
-// Note: We're using certain API 28 NdkMedia functions. This means NAVIA requires Android API 28 for Android NDK
+// Note: We're using certain API 28 NdkMedia functions. This means Navia requires Android API 28 for Android NDK
 // backend. However we can't tell users to compile using API 28 as they may require supporting older Android.
-// We're using function pointers anyway so the Android NDK backend will be unaviaailable at runtime on Android < API 28.
-#ifndef __ANDROID_UNAVIAAILABLE_SYMBOLS_ARE_WEAK__
-#define __ANDROID_UNAVIAAILABLE_SYMBOLS_ARE_WEAK__ 1 // NOLINT(bugprone-reserved-identifier)
+// We're using function pointers anyway so the Android NDK backend will be unavailable at runtime on Android < API 28.
+#ifndef __ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__
+#define __ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__ 1 // NOLINT(bugprone-reserved-identifier)
 #endif
 
 // We really want this to be 1 though!
-#if __ANDROID_UNAVIAAILABLE_SYMBOLS_ARE_WEAK__ != 1
-#undef __ANDROID_UNAVIAAILABLE_SYMBOLS_ARE_WEAK__
-#define __ANDROID_UNAVIAAILABLE_SYMBOLS_ARE_WEAK__ 1
+#if __ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__ != 1
+#undef __ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__
+#define __ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__ 1
 #endif
 
 #include "AndroidNDKBackend.hpp"
@@ -145,7 +145,7 @@ MediaSourceWrapper::MediaSourceWrapper(AndroidNDKBackend *backend, navia_input *
 {
 	if (datasource == nullptr)
 		throw std::runtime_error("cannot allocate AMediaDataSource");
-	
+
 	NAVIA_FFCALL(AMediaDataSource_setClose)(datasource, close);
 	NAVIA_FFCALL(AMediaDataSource_setGetAvailableSize)(datasource, getAvailableSize);
 	NAVIA_FFCALL(AMediaDataSource_setGetSize)(datasource, getSize);
@@ -183,7 +183,7 @@ ssize_t MediaSourceWrapper::readAt(void *userdata, off64_t offset, void *buffer,
 	if (input->tellf() != (uint64_t) offset)
 		if (!input->seekf((uint64_t) offset))
 			return -1;
-	
+
 	size_t readed = input->readf(buffer, size);
 	return readed > 0 ? ((ssize_t) readed) : (-1);
 }
@@ -286,7 +286,7 @@ AndroidNDKState::AndroidNDKState(AndroidNDKBackend *backend, UniqueMediaExtracto
 		}
 
 		UniqueMediaFormat outputFormat(NAVIA_FFCALL(AMediaCodec_getOutputFormat)(codec.get()), NAVIA_FFCALL(AMediaFormat_delete));
-		
+
 		int32_t val32 = 0;
 		int64_t val64 = 0;
 		float valf = 0.0;

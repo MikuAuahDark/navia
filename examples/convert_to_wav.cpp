@@ -1,7 +1,7 @@
 /**
- * This is an example code on how to use NAVIA to convert first audio stream
+ * This is an example code on how to use Navia to convert first audio stream
  * of media file to WAV. This example code is written with C++17 in mind.
- * 
+ *
  * Licensed under MIT No Attribution
  *
  * Copyright (c) 2025 Miku AuahDark
@@ -55,7 +55,7 @@ struct WAVWriter
 	{
 		if (!f)
 			throw std::system_error(errno, std::generic_category());
-		
+
 		write_header(sinfo);
 	}
 
@@ -69,7 +69,7 @@ struct WAVWriter
 		size_t w = fwrite(buf, 1, size, f);
 		if (w != size)
 			throw std::system_error(errno, std::generic_category());
-		
+
 		written_total += w;
 	}
 
@@ -129,12 +129,12 @@ int main(int argc, char *argv[])
 	 * navia_input is abstraction over input stream. This means
 	 * the input data can come either from file, memory, or
 	 * even streamed inside a Zip file.
-	 * 
+	 *
 	 * Either you can fill all the function yourself, or you can
 	 * use convenience function such as:
 	 * * `navia_input_populate_from_file` - Load from disk.
 	 * * `navia_input_populate_from_memory` - Load from memory.
-	 * 
+	 *
 	 * Also you'd notice that we allocate `navia_input` on the stack.
 	 * Yes, that's totally fine and intended way to use NAVIA.
 	 */
@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
 	 * * `argv[1]` - Pseudo-filename of the input stream.
 	 * * `nullptr` - Additional settings (e.g. disable hardware acceleration).
 	 *               We pass `nullptr` which means "use defaults".
-	 * 
+	 *
 	 * When `navia_open` succeeded, it will take the ownership of the `input`.
 	 * Assume the `input` has undefined contents in that case. This means
 	 * it's totally fine to reuse the `input` variable to populate another input
@@ -253,7 +253,7 @@ int main(int argc, char *argv[])
 		 *   with multiple planes depending on the video pixel format.
 		 * * For audio, this will give you interleaved audio data
 		 *   span across `*strides` bytes.
-		 * 
+		 *
 		 * Since we're dealing with audio data, we can assume there's only 1 plane.
 		 */
 		ptrdiff_t *strides;
@@ -264,7 +264,7 @@ int main(int argc, char *argv[])
 		{
 			/* This means it fails to acquire frame. */
 			fprintf(stderr, "Cannot acquire frame: %s\n", navia_error());
-			/* RAII will close the frame and the NAVIA instance. */
+			/* RAII will close the frame and the Navia instance. */
 			return 1;
 		}
 
