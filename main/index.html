@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>NAV: NAV</title>
+<title>Navia: Navia</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -25,9 +25,9 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">NAV<span id="projectnumber">&#160;0.0</span>
+   <div id="projectname">Navia<span id="projectnumber">&#160;0.0</span>
    </div>
-   <div id="projectbrief">NPad Audio Video Decoder</div>
+   <div id="projectbrief">NPad Audio Video Interface API</div>
   </td>
  </tr>
  </tbody>
@@ -90,18 +90,18 @@ $(document).ready(function(){initNavTree('index.html',''); initResizable(); });
 </div>
 
 <div><div class="header">
-  <div class="headertitle"><div class="title">NAV </div></div>
+  <div class="headertitle"><div class="title">Navia </div></div>
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p><a class="anchor" id="md_README"></a></p>
-<p>NPad Audio Video decoding library.</p>
+<p>NPad Audio Video Interface API.</p>
 <p>Performs audio and video decoding using platform-specific backends.</p>
 <h1><a class="anchor" id="autotoc_md0"></a>
 Backends</h1>
-<p>NAV relies on various backends to perform audio and video decoding.</p>
+<p>Navia relies on various backends to perform audio and video decoding.</p>
 <table class="markdownTable">
 <tr class="markdownTableHead">
-<th class="markdownTableHeadNone">Backend   </th><th class="markdownTableHeadNone">Kind   </th><th class="markdownTableHeadNone">OS Availability   </th><th class="markdownTableHeadNone"><code><a class="el" href="nav_8h.html#a89bd824481a04f40eeee80bb07285560" title="Get an unique name identifier of a backend.">nav_backend_name()</a></code>   </th><th class="markdownTableHeadNone">Disablement Env. Var*   </th><th class="markdownTableHeadNone">Additional Notes    </th></tr>
+<th class="markdownTableHeadNone">Backend   </th><th class="markdownTableHeadNone">Kind   </th><th class="markdownTableHeadNone">OS Availability   </th><th class="markdownTableHeadNone"><code><a class="el" href="navia_8h.html#ab16fb4fb9191aa566d4354846eed0c70" title="Get an unique name identifier of a backend.">navia_backend_name()</a></code>   </th><th class="markdownTableHeadNone">Disablement Env. Var*   </th><th class="markdownTableHeadNone">Additional Notes    </th></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><a href="https://developer.android.com/ndk/reference/group/media">NdkMedia</a>   </td><td class="markdownTableBodyNone">OS API   </td><td class="markdownTableBodyNone">Android   </td><td class="markdownTableBodyNone"><code>"android"</code>   </td><td class="markdownTableBodyNone"><code>ANDROIDNDK</code>   </td><td class="markdownTableBodyNone">Due to API limitations, Android 9 is required.    </td></tr>
 <tr class="markdownTableRowEven">
@@ -119,14 +119,13 @@ Backends</h1>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><a href="https://learn.microsoft.com/en-us/windows/win32/medfound/microsoft-media-foundation-sdk">MediaFoundation</a>   </td><td class="markdownTableBodyNone">OS API   </td><td class="markdownTableBodyNone">Windows   </td><td class="markdownTableBodyNone"><code>"mediafoundation"</code>   </td><td class="markdownTableBodyNone"><code>MEDIAFOUNDATION</code>   </td><td class="markdownTableBodyNone">UWP target is not supported.   </td></tr>
 </table>
-<p>*: Prepend <code>NAV_DISABLE_</code> to the environment variable name. It is shortened due to readability reasons.</p>
+<p>*: Prepend <code>NAVIA_DISABLE_</code> to the environment variable name. It is shortened due to readability reasons.</p>
 <p>**: By default, only one FFmpeg version is picked based on what's the compiler can find. To compile with support for multiple FFmpeg versions, see below.</p>
 <h1><a class="anchor" id="autotoc_md1"></a>
 Multiple FFmpeg Version Support</h1>
-<p>NAV since 0.3.0 can be compiled to support multiple FFmpeg versions.</p>
 <p>To compile with multiple FFmpeg versions, pass <code>-DFFMPEGn_DIR</code> (where <code>n</code> is between 4 to 8, both inclusive) in CMake command-line to location where FFmpeg header files are placed. Note that the directory should be one directory above the <code>include</code>. For example, if you have FFmpeg 7 includes in <code>/path/to/ffmpeg7/include</code>, then do <code>-DFFMPEG7_DIR=/path/to/ffmpeg7</code>.</p>
 <p>Example command-line for CMake: </p><div class="fragment"><div class="line">cmake -Bbuild -S. --install-prefix $PWD/installdir -DFFMPEG6_DIR=/path/to/ffmpeg6 -DFFMPEG7_DIR=/path/to/ffmpeg7</div>
-</div><!-- fragment --><p>For best compatibility, it's recommended to use FFmpeg n.0 header files. Note that NAV only needs functional header files to compile as library files will be loaded at runtime.</p>
+</div><!-- fragment --><p>For best compatibility, it's recommended to use FFmpeg n.0 header files. Note that Navia only needs functional header files to compile as library files will be loaded at runtime.</p>
 <h1><a class="anchor" id="autotoc_md2"></a>
 Examples</h1>
 <p>Currently there's only 1 example. See <code>examples</code> folder.</p>

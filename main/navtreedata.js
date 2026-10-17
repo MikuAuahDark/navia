@@ -24,7 +24,7 @@
 */
 var NAVTREE =
 [
-  [ "NAV", "index.html", [
+  [ "Navia", "index.html", [
     [ "Backends", "index.html#autotoc_md0", null ],
     [ "Multiple FFmpeg Version Support", "index.html#autotoc_md1", null ],
     [ "Examples", "index.html#autotoc_md2", null ],
