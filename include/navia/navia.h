@@ -120,7 +120,7 @@ NAVIA_API const char *navia_backend_info(size_t index);
  *                 specify a pseudo-filename (the file doesn't have to exist in filesystem).
  * @param settings Additional settings to specify. This can be NULL.
  * @return Pointer to Navia instance, or NULL on failure.
- * @note When the function errors, the input ownership will be given back to the caller.
+ * @note On success, the `input` ownership is taken by the Navia instance. Otherwise, it's given back to the caller.
  */
 NAVIA_NODISCARD NAVIA_API navia_t *navia_open(navia_input *input, const char *filename, const navia_settings *settings);
 
