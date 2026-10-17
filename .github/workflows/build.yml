@@ -12,7 +12,7 @@ jobs:
         shell: cmd
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
     - name: Get FFmpeg 5
       uses: robinraju/release-downloader@v1
       with:
@@ -63,7 +63,7 @@ jobs:
     - name: Install
       run: cmake --build build --config RelWithDebInfo --target install -j%NUMBER_OF_PROCESSORS%
     - name: Artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: navia-dll-${{ matrix.PLATFORM }}
         path: install/
@@ -75,10 +75,10 @@ jobs:
       matrix:
         platform:
         - arch: x86-64
-          runs-on: ubuntu-24.04
+          runs-on: ubuntu-26.04
           container: debian:bullseye
         - arch: arm64
-          runs-on: ubuntu-24.04-arm
+          runs-on: ubuntu-26.04-arm
           container: arm64v8/debian:bullseye
     steps:
     - name: Setup
@@ -94,17 +94,17 @@ jobs:
           libgstreamer-plugins-base1.0-dev
       # Navia
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       # FFmpeg 4
     - name: Checkout FFmpeg 4
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         repository: FFmpeg/FFmpeg
         ref: n4.0
         path: ffmpeg4
     - name: Cache FFmpeg 4
       id: ffmpeg4
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ffmpeg4/build/installdir
         key: ffmpeg4
@@ -119,14 +119,14 @@ jobs:
         make install -j$(nproc)
       # FFmpeg 5
     - name: Checkout FFmpeg 5
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         repository: FFmpeg/FFmpeg
         ref: n5.0
         path: ffmpeg5
     - name: Cache FFmpeg 5
       id: ffmpeg5
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ffmpeg5/build/installdir
         key: ffmpeg5
@@ -141,14 +141,14 @@ jobs:
         make install -j$(nproc)
       # FFmpeg 6
     - name: Checkout FFmpeg 6
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         repository: FFmpeg/FFmpeg
         ref: n6.0
         path: ffmpeg6
     - name: Cache FFmpeg 6
       id: ffmpeg6
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ffmpeg6/build/installdir
         key: ffmpeg6
@@ -163,14 +163,14 @@ jobs:
         make install -j$(nproc)
       # FFmpeg 7
     - name: Checkout FFmpeg 7
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         repository: FFmpeg/FFmpeg
         ref: n7.0
         path: ffmpeg7
     - name: Cache FFmpeg 7
       id: ffmpeg7
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ffmpeg7/build/installdir
         key: ffmpeg7
@@ -185,14 +185,14 @@ jobs:
         make install -j$(nproc)
       # FFmpeg 8
     - name: Checkout FFmpeg 8
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         repository: FFmpeg/FFmpeg
         ref: n8.0
         path: ffmpeg8
     - name: Cache FFmpeg 8
       id: ffmpeg8
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ffmpeg8/build/installdir
         key: ffmpeg8
@@ -216,25 +216,25 @@ jobs:
     - name: Install
       run: cmake --build build --target install -j$(nproc)
     - name: Artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: navia-linux-${{ matrix.platform.arch }}
         path: install/
         compression-level: 9
   Android:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       matrix:
         abi: [armeabi-v7a, arm64-v8a, x86_64]
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
     - name: Configure
       run: cmake -Bbuild -S. -DCMAKE_SYSTEM_NAME=Android -DCMAKE_ANDROID_ARCH_ABI=${{ matrix.abi }} -DCMAKE_BUILD_TYPE=RelWithDebInfo --install-prefix $PWD/install -DBUILD_SHARED_LIBS=1
     - name: Install
       run: cmake --build build --target install -j$(nproc)
     - name: Artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: navia-android-${{ matrix.abi }}
         path: install/
