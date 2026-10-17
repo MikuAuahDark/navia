@@ -573,7 +573,7 @@ This call only return meaningful value if the stream is an audio. </dd></dl>
 <p>Get last error message from last invocation of Navia functions. </p>
 <dl class="section return"><dt>Returns</dt><dd>Pointer to the error message, or NULL if there are no errors. </dd></dl>
 <dl class="section note"><dt>Note</dt><dd>Error messages are local to the caller thread. </dd></dl>
-<dl class="section warning"><dt>Warning</dt><dd>The error message pointer will be invalid when calling another Navia function! </dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>The error message pointer and its contents is only valid after last Navia function! </dd></dl>
 
 </div>
 </div>
