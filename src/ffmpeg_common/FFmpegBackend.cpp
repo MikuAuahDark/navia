@@ -650,7 +650,11 @@ FFmpegState::FFmpegState(FFmpegBackend *backend, UniqueAVFormatContext &fmtctx, 
 					codecContext->get_format = pickPixelFormat;
 				}
 
-				if (good && !settings.disable_hwaccel && stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO)
+				if (
+					good &&
+					settings.hwaccel_mode != NAVIA_HWACCELMODE_DISABLED &&
+					stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO
+				)
 				{
 					// Try enable hardware acceleration
 					std::vector<AVHWDeviceType> devices = getHWAccels();

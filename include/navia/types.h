@@ -76,7 +76,7 @@ typedef enum navia_hwacceltype
 {
 	/* Not hardware accelerated or unknown hardware acceleration. */
 	NAVIA_HWACCELTYPE_NONE,
-	/* Hardware-accelerated by Vulkan. The HW-accelerated handle is `VkImageView*`. */
+	/* Hardware-accelerated by Vulkan. The HW-accelerated handle is (TO BE ADDED). */
 	NAVIA_HWACCELTYPE_VULKAN,
 	/* (Windows) Hardware-accelerated by D3D11. The HW-accelerated handle is `ID3D11Texture2D*`. */
 	NAVIA_HWACCELTYPE_D3D11,
@@ -85,6 +85,19 @@ typedef enum navia_hwacceltype
 } navia_hwacceltype;
 
 #define NAVIA_SETTINGS_VERSION 0
+
+typedef enum navia_hwaccelmode
+{
+	/* Do not use hardware acceleration to decode video. */
+	NAVIA_HWACCELMODE_DISABLED,
+	/* Try to use hardware acceleration, optionally with the existing device if necessary, but allow making new device
+	 * of different GPU API if fails. This allows CPU fallback as well.
+	 */
+	NAVIA_HWACCELMODE_DEFAULT,
+	/* Use the existing device. Do not allow using other GPU API. Note that this still allows CPU fallback. */
+	NAVIA_HWACCELMODE_EXISTING_ONLY,
+	NAVIA_HWACCELMODE_MAX_ENUM,
+} navia_hwaccelmode;
 
 typedef struct navia_settings
 {
@@ -100,8 +113,17 @@ typedef struct navia_settings
 	 * but it ensure the value is at least 1.
 	 */
 	uint32_t max_threads;
-	/* If true, this hints backends to prefer CPU decoding. */
-	navia_bool disable_hwaccel;
+
+	/* Video hardware-acceleration mode. */
+	navia_hwaccelmode hwaccel_mode;
+	/* Optional pointer to `ID3D11Device`, cast as `void*` to use for HW-accelerated decoding. The D3D11 device must
+	 * be created with `D3D11_CREATE_DEVICE_VIDEO_SUPPORT` flag and multithread-protected.
+	 *
+	 * Ignored if `hwaccel_mode` is `NAVIA_HWACCELMODE_DISABLED`.
+	 *
+	 * Note that if the passed device is only allocated for Navia purpose, you need to do texture interop yourself.
+	 */
+	void *d3d11_device;
 } navia_settings;
 
 #endif /* _NAVIA_TYPES_H_ */

@@ -1072,8 +1072,9 @@ State *MediaFoundationBackend::open(navia_input *input, const char *filename, co
 	HWAccelState hwaccelState {};
 	hwaccelState.active = false;
 
-	if (!settings->disable_hwaccel)
+	if (settings->hwaccel_mode != NAVIA_HWACCELMODE_DISABLED)
 	{
+		/* TODO: Try to use existing device. */
 		if (SUCCEEDED(NAVIA_FFCALL(D3D11CreateDevice)(
 			nullptr,
 			D3D_DRIVER_TYPE_HARDWARE,

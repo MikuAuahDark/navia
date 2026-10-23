@@ -92,12 +92,10 @@ public:
 				NAVIA_SETTINGS_VERSION,
 				nullptr,
 				std::max<uint32_t>(std::thread::hardware_concurrency(), 1),
-				navia::getEnvvarBool("NAVIA_DISABLE_HWACCEL") || navia::getEnvvarBool("NAVIA_DISABLE_HWACCEL")
+				navia::getEnvvarBool("NAVIA_DISABLE_HWACCEL") ? NAVIA_HWACCELMODE_DISABLED : NAVIA_HWACCELMODE_DEFAULT
 			};
 			std::optional<int> threadCount = navia::getEnvvarInt("NAVIA_THREAD_COUNT");
-			if (!threadCount)
-				threadCount = navia::getEnvvarInt("NAVIA_THREAD_COUNT");
-			if (threadCount)
+			if (threadCount.has_value())
 				defaultSettings.max_threads = (uint32_t) std::max(threadCount.value(), 1);
 
 			initialized = true;
@@ -220,6 +218,22 @@ private:
 #endif
 	nullptr
 });
+
+namespace navia
+{
+
+static std::optional<navia_settings> convertSettings(const uint64_t *settingsbase)
+{
+	switch (*settingsbase)
+	{
+		case 0:
+			return *((const navia_settings*) settingsbase);
+		default:
+			return std::nullopt;
+	}
+}
+
+}
 
 template<typename T, typename C, typename... Args, typename... UArgs>
 T wrapcall(C *c, T(C::*m)(Args...), T defval, UArgs... args)
