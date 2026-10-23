@@ -267,6 +267,7 @@ private:
 	friend Backend *create();
 	friend struct MediaFoundationAcquire;
 	MediaFoundationBackend();
+	ComPtr<ID3D11Device> createD3D11() noexcept;
 
 	DynLib d3d11, mfplat, mfreadwrite;
 	bool callCoUninitialize;

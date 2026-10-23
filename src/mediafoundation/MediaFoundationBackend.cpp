@@ -1074,19 +1074,12 @@ State *MediaFoundationBackend::open(navia_input *input, const char *filename, co
 
 	if (settings->hwaccel_mode != NAVIA_HWACCELMODE_DISABLED)
 	{
-		/* TODO: Try to use existing device. */
-		if (SUCCEEDED(NAVIA_FFCALL(D3D11CreateDevice)(
-			nullptr,
-			D3D_DRIVER_TYPE_HARDWARE,
-			nullptr,
-			D3D11_CREATE_DEVICE_VIDEO_SUPPORT,
-			nullptr,
-			0,
-			D3D11_SDK_VERSION,
-			hwaccelState.d3d11dev.dptr(),
-			nullptr,
-			nullptr
-		)))
+		if (settings->d3d11_device)
+			hwaccelState.d3d11dev = ComPtr<ID3D11Device>((ID3D11Device*) settings->d3d11_device);
+		else if (settings->hwaccel_mode != NAVIA_HWACCELMODE_EXISTING_ONLY)
+			hwaccelState.d3d11dev = createD3D11();
+
+		if (hwaccelState.d3d11dev)
 		{
 			if (SUCCEEDED(NAVIA_FFCALL(MFCreateDXGIDeviceManager)(&hwaccelState.resetToken, hwaccelState.dxgidm.dptr())))
 			{
@@ -1094,10 +1087,6 @@ State *MediaFoundationBackend::open(navia_input *input, const char *filename, co
 					hwaccelState.d3d11dev.get(),
 					hwaccelState.resetToken
 				));
-
-				// Multithread protected
-				if (ComPtr<ID3D11Multithread> d3d11mt = hwaccelState.d3d11dev.dcast<ID3D11Multithread>(ID3D11Multithread_GUID))
-					d3d11mt->SetMultithreadProtected(TRUE);
 			}
 		}
 	}
@@ -1138,6 +1127,31 @@ navia_backendtype MediaFoundationBackend::getType() const noexcept
 const char *MediaFoundationBackend::getInfo()
 {
 	return nullptr;
+}
+
+ComPtr<ID3D11Device> MediaFoundationBackend::createD3D11() noexcept
+{
+	ComPtr<ID3D11Device> result{};
+
+	if (SUCCEEDED(NAVIA_FFCALL(D3D11CreateDevice)(
+		nullptr,
+		D3D_DRIVER_TYPE_HARDWARE,
+		nullptr,
+		D3D11_CREATE_DEVICE_VIDEO_SUPPORT,
+		nullptr,
+		0,
+		D3D11_SDK_VERSION,
+		result.dptr(),
+		nullptr,
+		nullptr
+	)))
+	{
+		// Multithread protected
+		if (ComPtr<ID3D11Multithread> d3d11mt = result.dcast<ID3D11Multithread>(ID3D11Multithread_GUID))
+			d3d11mt->SetMultithreadProtected(TRUE);
+	}
+
+	return result;
 }
 
 Backend *create()

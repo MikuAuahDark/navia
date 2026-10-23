@@ -10,6 +10,12 @@
 #include <string>
 #include <tuple>
 
+#ifdef _WIN32
+#define NOMINMAX
+#include <windows.h>
+#include <d3d11.h>
+#endif
+
 extern "C"
 {
 #include <libavcodec/avcodec.h>
@@ -17,6 +23,10 @@ extern "C"
 #include <libavutil/avutil.h>
 #include <libswresample/swresample.h>
 #include <libswscale/swscale.h>
+
+#ifdef _WIN32
+#include <libavutil/hwcontext_d3d11va.h>
+#endif
 }
 
 #include "Internal.hpp"
@@ -43,8 +53,10 @@ static std::set<AVPixelFormat> supportedHWAccelPixFmt = {
 #if _NAVIA_FFMPEG_VERSION >= 5
 	AV_PIX_FMT_VULKAN,
 #endif
+#ifdef _WIN32
 	AV_PIX_FMT_D3D11,
-	AV_PIX_FMT_VAAPI
+#endif
+	AV_PIX_FMT_VAAPI,
 };
 
 static ptrdiff_t getHWDevicePriority(AVHWDeviceType type)
@@ -676,15 +688,12 @@ FFmpegState::FFmpegState(FFmpegBackend *backend, UniqueAVFormatContext &fmtctx, 
 
 							if (hwconfig->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX)
 							{
-								if (NAVIA_FFCALL(av_hwdevice_ctx_create)(
-									&codecContext->hw_device_ctx,
-									hwacceltype,
-									nullptr,
-									nullptr,
-									0
-								) == 0)
+								// Create HW device
+								AVBufferRef *hwdev = createHWCtx(hwacceltype, settings);
+								if (hwdev)
 								{
 									// Got one
+									codecContext->hw_device_ctx = hwdev;
 									codecContext->pix_fmt = hwconfig->pix_fmt;
 									// FIXME: Query the hardware constraints.
 									// But for now, assume NV12.
@@ -1212,6 +1221,40 @@ AVPixelFormat FFmpegState::pickPixelFormat(AVCodecContext *s, const AVPixelForma
 	}
 
 	return AV_PIX_FMT_NONE;
+}
+
+AVBufferRef *FFmpegState::createHWCtx(AVHWDeviceType devtype, const navia_settings &settings) noexcept
+{
+	AVBufferRef *result = nullptr;
+	// or any other
+	bool makeAuto = devtype == AV_HWDEVICE_TYPE_D3D11VA && !settings.d3d11_device;
+
+	if (makeAuto)
+		NAVIA_FFCALL(av_hwdevice_ctx_create)(&result, devtype, nullptr, nullptr, 0);
+	else
+	{
+		result = NAVIA_FFCALL(av_hwdevice_ctx_alloc)(devtype);
+		if (result)
+		{
+			AVHWDeviceContext *hwdctx = (AVHWDeviceContext*) result->data;
+
+#ifdef _WIN32
+			if (devtype == AV_HWDEVICE_TYPE_D3D11VA && settings.d3d11_device)
+			{
+				ID3D11Device *dev = (ID3D11Device*) settings.d3d11_device;
+				AVD3D11VADeviceContext *d3d11 = (AVD3D11VADeviceContext*) hwdctx->hwctx;
+
+				dev->AddRef();
+				d3d11->device = dev;
+			}
+#endif
+
+			if (NAVIA_FFCALL(av_hwdevice_ctx_init)(result) < 0)
+				NAVIA_FFCALL(av_buffer_unref)(&result);
+		}
+	}
+
+	return result;
 }
 
 #undef NAVIA_FFCALL

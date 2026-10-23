@@ -75,6 +75,7 @@ private:
 	bool canDecode(size_t index);
 	std::vector<AVHWDeviceType> getHWAccels();
 	static AVPixelFormat pickPixelFormat(AVCodecContext *s, const AVPixelFormat *fmt) noexcept;
+	AVBufferRef *createHWCtx(AVHWDeviceType devtype, const navia_settings &settings) noexcept;
 
 	FFmpegBackend *f;
 	UniqueAVFormatContext formatContext;
