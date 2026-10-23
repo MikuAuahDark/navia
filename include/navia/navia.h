@@ -1,8 +1,8 @@
 /**
  * @file navia.h
  * @author Miku AuahDark
- * @brief NPad's Audio Video decoding library.
- * @version 0.1.0
+ * @brief NPad Audio Video Interface API
+ * @version 0.4.0
  * @copyright Copyright (c) 2024 Miku AuahDark Licensed under zlib/libpng license.
  */
 
@@ -10,7 +10,7 @@
 #define _NAVIA_H_
 
 #define NAVIA_VERSION_MAJOR 0
-#define NAVIA_VERSION_MINOR 3
+#define NAVIA_VERSION_MINOR 4
 #define NAVIA_VERSION_PATCH 0
 #define NAVIA_VERSION_FORMAT(a, b, c) ((a << 16) | (b << 8) | c)
 #define NAVIA_VERSION NAVIA_VERSION_FORMAT(NAVIA_VERSION_MAJOR, NAVIA_VERSION_MINOR, NAVIA_VERSION_PATCH)
